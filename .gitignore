@@ -23,9 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# Ignore frontend env
-/frontend/.env
-/frontend/.env.*
+# Ignore client env
+/client/.env
+/client/.env.*
 
 # Ignore backend env
 /backend/.env
