@@ -1,0 +1,92 @@
+import bcrypt from "bcryptjs";
+import { User } from "../models/user.model.js";
+import  cloudinary  from "../config/cloudinary.js";
+
+
+
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error("Error getting user profile controller:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateUserProfile = async (req, res) => {
+  const { name, email , password,newPassword,profile,phone} = req.body;
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.name = name || user.name;
+    user.profile = profile || user.profile;
+    if (profile && profile.avatar) {
+        if (user.profile.avatar) {
+        await cloudinary.uploader.destroy(
+          user.profile.avatar.split("/").pop().split(".")[0]
+        );
+      }
+      const uploadedResponse = await cloudinary.uploader.upload(
+        profile.avatar,
+        {
+          upload_preset: envVars.uploadPreset, 
+          transformation: [
+            { crop: "fill", gravity: "face" },
+            { fetch_format: "auto", quality: "auto" },
+          ],
+        }
+      );
+      user.profile.avatar = uploadedResponse.secure_url;
+    }
+    if (phone) {
+        const existingPhone = await User.findOne({ phone });
+        if (existingPhone && existingPhone._id.toString() !== user._id.toString()) {
+            return res.status(400).json({ message: "Phone number already exists" });
+        }
+        user.phone = phone;
+        user.phoneVerified = false;
+    }
+    if (email){
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail && existingEmail._id.toString() !== user._id.toString()) {
+            return res.status(400).json({ message: "Email already exists" });
+        }
+        user.email = email;
+    }
+
+    if (password && newPassword) {
+      const isPasswordMatch = await bcrypt.compare(password, user.password);
+      if (!isPasswordMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+    }
+    await user.save();
+    return res.status(200).json({ message: "Profile updated successfully", user });
+  } catch (error) {
+    console.error("Error updating user profile controller:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getSupplierProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('name profile role');
+
+    if (!user || user.role !== 'supplier') {
+      return res.status(404).json({ message: 'Supplier not found' });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
