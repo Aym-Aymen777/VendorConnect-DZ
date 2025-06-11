@@ -24,10 +24,15 @@ dist-ssr
 *.sw?
 
 # Ignore client env
+.env
+.env.*
+**/.env
+**/.env.*
+*/.env.*
+*/.env
 /client/.env
 /client/.env.*
-/client/.env.local
-*/.env
+
 
 
 # Ignore backend env
