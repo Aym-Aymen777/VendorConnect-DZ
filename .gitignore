@@ -26,6 +26,9 @@ dist-ssr
 # Ignore client env
 /client/.env
 /client/.env.*
+/client/.env.local
+*/.env
+
 
 # Ignore backend env
 /backend/.env
