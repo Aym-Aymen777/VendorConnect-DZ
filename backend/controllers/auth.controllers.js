@@ -1,4 +1,4 @@
-import User from "../models/user.model.js";
+import {User} from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { generateTokenAndSetCookies } from "../utils/generateToken.js";
 import { OAuth2Client } from "google-auth-library";
@@ -51,8 +51,8 @@ export const registerUser = async (req, res) => {
       email,
       password: hashedPassword,
     });
-    generateTokenAndSetCookies(user._id, res);
     await user.save();
+    generateTokenAndSetCookies(user._id, res);
     return res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.error("Error registering user controller:", error);

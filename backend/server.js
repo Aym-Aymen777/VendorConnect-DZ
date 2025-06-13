@@ -4,6 +4,11 @@ import {connectDB} from './config/db.js';
 import { envVars } from './utils/envVars.js';
 import cors from 'cors';
 
+import { authRoutes } from './routes/auth.routes.js';
+import { userRoutes } from './routes/user.routes.js';
+import { chatRoutes } from './routes/chat.routes.js';
+import { productRoutes } from './routes/product.routes.js';
+
 
 
 const app = express();
@@ -13,9 +18,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-    origin: envVars.nodeEnv=== 'production' ? envVars.clientUrl : 'http://localhost:3000', // Allow requests from the client URL in production
+    origin: envVars.nodeEnv=== 'production' ? envVars.clientUrl : 'http://localhost:3100', // Allow requests from the client URL in production
     credentials: true, // Allow cookies to be sent
 }));
+
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/user', userRoutes);
+app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/product", productRoutes);
 
 
 app.listen(PORT, () => {

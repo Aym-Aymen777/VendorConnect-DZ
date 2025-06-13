@@ -12,7 +12,9 @@ const userSchema = new mongoose.Schema(
     },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true, unique: true },
+    phone: { type: String, //required: true,
+     //unique: true
+     },
     phoneVerified: { type: Boolean, default: false },
     password: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
@@ -47,6 +49,41 @@ const userSchema = new mongoose.Schema(
         ref: "Notification",
       },
     ],
+    supplierProfile: {
+  companyName: { type: String, required: true },
+  businessType: { type: String, enum: ['store', 'workshop', 'supplier'], required: true },
+  industry: String,
+  description: String,
+  address: String,
+  city: String,
+  country: String,
+  phone: String,
+  website: String,
+  logoUrl: { type: String, default: '/default.png' },
+  coverImageUrl: String,
+  socialLinks: {
+    facebook: String,
+    instagram: String,
+    linkedin: String,
+    whatsapp: String,
+    tiktok: String
+  },
+  gallery: [String],
+  profileVideoUrl: String,
+  locationMap: String,
+  documents: {
+    identityDocumentUrl: String,
+    businessLicenseUrl: String,
+    resumeOrPortfolioUrl: String,
+  },
+  subscription: {
+    plan: { type: String, default: 'basic' },
+    isSubscribed: Boolean,
+    expiryDate: Date
+  },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+}
+
   },
   { timestamps: true }
 );

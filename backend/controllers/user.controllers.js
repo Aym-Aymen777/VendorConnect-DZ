@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/user.model.js";
+import { SupplierRequest } from "../models/request.model.js";
 import  cloudinary  from "../config/cloudinary.js";
+import { envVars } from "../utils/envVars.js";
+
 
 
 
@@ -90,3 +93,55 @@ export const getSupplierProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+export const submitDocsAndBecomeSupplier = async (req, res) => {
+  try {
+   const {supplierProfile}= req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+   if (
+  supplierProfile &&
+  supplierProfile.documents &&
+  supplierProfile.documents.length > 0
+) {
+  const uploadedDocs = {};
+
+  for (let doc of supplierProfile.documents) {
+    const result = await cloudinary.uploader.upload(doc,  {
+          upload_preset: envVars.uploadPreset, 
+          transformation: [
+            { fetch_format: "auto", quality: "auto" },
+          ],
+        });
+    // Assign URL based on the field name or order
+    if (!uploadedDocs.identityDocumentUrl) {
+      uploadedDocs.identityDocumentUrl = result.secure_url;
+    } else if (!uploadedDocs.businessLicenseUrl) {
+      uploadedDocs.businessLicenseUrl = result.secure_url;
+    } else if (!uploadedDocs.resumeOrPortfolioUrl) {
+      uploadedDocs.resumeOrPortfolioUrl = result.secure_url;
+    }
+  }
+
+  supplierProfile.documents = uploadedDocs;
+}
+
+/* if (!uploadedDocs){
+  return res.status(400).json({ message: "Please upload all required documents" }); // TODO recomment this in UI
+} */
+
+    user.supplierProfile = supplierProfile;
+    await user.save();
+    const newSupplierRequest = new SupplierRequest({
+      user: user,
+    })
+    return res.status(200).json({ message: "Documents submitted successfully" });
+
+  } catch (error) {
+    console.error("Error submitting user documents controller:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
