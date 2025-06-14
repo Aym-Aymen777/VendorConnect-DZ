@@ -8,6 +8,11 @@ import { authRoutes } from './routes/auth.routes.js';
 import { userRoutes } from './routes/user.routes.js';
 import { chatRoutes } from './routes/chat.routes.js';
 import { productRoutes } from './routes/product.routes.js';
+import { quotationRoutes } from './routes/quotation.routes.js';
+
+// import the cron job to start it
+import {expireOldAdsJob} from "./utils/cronJobs/adExpired.js";
+import { planExpiredJob } from './utils/cronJobs/planExpired.js';
 
 
 
@@ -27,9 +32,12 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/product", productRoutes);
+app.use("/api/v1/quotation", quotationRoutes);
 
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     connectDB();
+    expireOldAdsJob();
+    planExpiredJob();
 })

@@ -6,9 +6,9 @@ const subscriptionSchema = new mongoose.Schema(
   planName: { type: String, required: true },
   price: { type: Number, required: true },
   durationInDays: { type: Number, required: true },
-  isActive: { type: Boolean, default: true },
   startedAt: { type: Date, default: Date.now },
-  endsAt: { type: Date }
+  endsAt: { type: Date },
+  status: { type: String, enum: ['active', 'expired'], default: 'active' }
 },
 
   { timestamps: true }
