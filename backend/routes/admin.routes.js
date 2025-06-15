@@ -15,5 +15,6 @@ router.get("/users", ProtectRoute, isAdmin, getAllUsers);
 router.get("/products", ProtectRoute, isAdmin, getAllProducts);
 router.get("/dashboard", ProtectRoute, isAdmin, getDashboardStats);
 router.get("/ads", ProtectRoute, isAdmin, getAllAds);
+//TODO add request routes
 
 export const adminRoutes = router;

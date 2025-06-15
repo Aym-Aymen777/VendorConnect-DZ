@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 export const createOrGetChat = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId } = req.body;   //TODO I don't know yet what to do with this controller exactly let it in UI
 
     if (!userId) return res.status(400).json({ message: "User ID is required" });
 
@@ -81,7 +81,7 @@ export const getChatMessages = async (req, res) => {
     })
       .sort({ createdAt: 1 })
       .populate("sender", "name profile.avatar")
-      .populate("receiver", "name profile.avatar");
+      .populate("receiver", "name profile.avatar"); //TODO make the unseen messages seen
 
     res.status(200).json(messages);
   } catch (error) {

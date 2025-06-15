@@ -8,7 +8,18 @@ const productSchema = new mongoose.Schema(
   price: { type: Number, required: true },
   category: { type: String, required: true },
   country: { type: String, required: true },
-  media: [ { type: String, url: String } ], // images/videos
+ media: [
+    {
+      type: {
+        type: String, // e.g., 'image' or 'video'
+        required: true,
+      },
+      url: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
   isPromoted: { type: Boolean, default: false },
   views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },

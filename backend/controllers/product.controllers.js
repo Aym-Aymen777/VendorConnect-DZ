@@ -62,13 +62,13 @@ export const getProductDetails = async(req, res) => {
 export const addProduct = async(req, res) => {
     try {
         const {title, description, price, category, country, media} = req.body;
-        if (!title || !description || !price || !category || !country || !media) {
+        if (!title || !description || !price || !category || !country || !media ) {
             return res.status(400).json({ message: "All fields are required" });
         }
         if (!req.user) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        if (media.length < 1) {
+         if (media.length < 1) {
             return res.status(400).json({ message: "At least one image is required" });
         }
 
@@ -90,7 +90,7 @@ export const addProduct = async(req, res) => {
         if (media.length > 5) {
             return res.status(400).json({ message: "Maximum of 5 images allowed" });
         }
-
+  
 
         const product = await Product.create({
             supplier: req.user._id,
@@ -126,7 +126,10 @@ const extractPublicId = (url) => {
 export const updateProduct = async (req, res) => {
   try {
     const { title, description, price, category, country } = req.body;
+    console.log("BODY:", req.body);
+console.log("FILES:", req.files);
     const productId = req.params.id;
+    const media=req.files
 
     if (!productId) {
       return res.status(400).json({ message: "Product id is required" });
@@ -150,7 +153,7 @@ export const updateProduct = async (req, res) => {
     product.country = country || product.country;
 
     // 🔄 Update media if new files provided
-    if (req.files && req.files.length > 0) {
+    if (media && media.length > 0) {
       // 1. Delete old media
       for (const item of product.media) {
         const publicId = extractPublicId(item.url);
@@ -163,7 +166,7 @@ export const updateProduct = async (req, res) => {
 
       // 2. Upload new media
       const uploadedMedia = await Promise.all(
-        req.files.map(async (file) => {
+        media.map(async (file) => {
           const result = await cloudinary.uploader.upload(file.path, {
             folder: "products",
             resource_type: "auto",
@@ -175,7 +178,7 @@ export const updateProduct = async (req, res) => {
           };
         })
       );
-
+      console.log("Uploaded Media", uploadedMedia)
       product.media = uploadedMedia;
     }
 

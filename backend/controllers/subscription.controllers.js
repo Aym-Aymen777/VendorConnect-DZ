@@ -32,10 +32,11 @@ export const subscribeToPlan = async (req, res) => {
     const startsAt = new Date();
     const endsAt = new Date(startsAt.getTime() + plan.duration * 24 * 60 * 60 * 1000);
 
-    const subscription = await Subscription.create({
+    const subscription = await Subscription.create({    // TODO : navigate the supplier to admin watsapp and the request to admin dashboard
       user: req.user._id,
       planName: plan.name,
       price: plan.price,
+      durationInDays: plan.duration,
       startsAt,
       endsAt,
       status: "active"
@@ -97,7 +98,7 @@ export const updateMySubscription = async (req, res) => {
 
     subscription.planName = plan.name;
     subscription.price = plan.price;
-    subscription.startsAt = startsAt;
+    subscription.startedAt = startsAt;
     subscription.endsAt = endsAt;
     subscription.status = "active";
 

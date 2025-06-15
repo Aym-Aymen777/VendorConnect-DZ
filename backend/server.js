@@ -9,6 +9,9 @@ import { userRoutes } from './routes/user.routes.js';
 import { chatRoutes } from './routes/chat.routes.js';
 import { productRoutes } from './routes/product.routes.js';
 import { quotationRoutes } from './routes/quotation.routes.js';
+import { adRoutes } from './routes/ad.routes.js';
+import { subscribtionRoutes } from './routes/subscribtion.routes.js';
+import { adminRoutes } from './routes/admin.routes.js';
 
 // import the cron job to start it
 import {expireOldAdsJob} from "./utils/cronJobs/adExpired.js";
@@ -32,7 +35,10 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/product", productRoutes);
+app.use("/api/v1/ads",adRoutes);
+app.use("/api/v1/subscription", subscribtionRoutes);
 app.use("/api/v1/quotation", quotationRoutes);
+app.use("/api/v1/admin",adminRoutes)
 
 
 app.listen(PORT, () => {

@@ -5,8 +5,8 @@ import { ProtectRoute } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 router.post("/chats", ProtectRoute, createOrGetChat);
-router.get("/chats", ProtectRoute, getUserChats);
-router.get("/chats/:id", ProtectRoute, getChatMessages);    
-router.post("/chats/:id", ProtectRoute, sendMessage);
+router.get("/my-chats", ProtectRoute, getUserChats);
+router.get("/chat/:id", ProtectRoute, getChatMessages);    
+router.post("/send/:id", ProtectRoute, sendMessage);
 
 export const chatRoutes = router;
