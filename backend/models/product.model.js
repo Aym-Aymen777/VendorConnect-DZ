@@ -21,6 +21,7 @@ const productSchema = new mongoose.Schema(
     },
   ],
   isPromoted: { type: Boolean, default: false },
+  isFeatured: { type: Boolean, default: false },
   views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 },

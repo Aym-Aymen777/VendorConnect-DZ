@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
     phoneVerified: { type: Boolean, default: false },
     password: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
     socialLogin: { type: Boolean, default: false },
     languagePreference: { type: String, default: "en" },
     country: { type: String, default: "US" },
