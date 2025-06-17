@@ -1,17 +1,20 @@
 import {Routes,Route} from "react-router-dom";
 import {Toaster} from "react-hot-toast";
-import Header from "./components/common/Header";
+
+//components
 import Footer from "./components/common/Footer";
+
+
+//pages
+import  Home  from "./pages/Home";
 
 
 function App() {
   return (
     <>
-    <Header/>
-      {/* <Routes>
-        <Route path="/login" element={!user ? <LoginPage/> : <Navigate to={"/"}/> } />
-        <Route path="/signup" element={!user ? <SignupPage/> : <Navigate to={"/"}/> } />
-      </Routes> */}
+      { <Routes>
+        <Route path="/" element={<Home/>} />
+      </Routes> }
       <Toaster/>
       <Footer />
     </>
