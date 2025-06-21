@@ -17,17 +17,34 @@ import {
   TrendingUp,
   Star,
   Sparkles,
+  UserCircle,
+  CreditCard,
+  MapPin,
+  Bell,
+  BarChart3,
+  Package2,
+  PenTool,
+  FileText,
+  Shield,
+  Phone,
+  BookOpen,
+  Coins,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import SearchBar from "../marketplace/SearchBar";
+import useSearchStore from "../../store/SearchStore";
+
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { searchTerm, setSearchTerm } = useSearchStore();
   const [cartCount, setCartCount] = useState(3);
   const [wishlistCount, setWishlistCount] = useState(7);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const navigate = useNavigate();
 
   const hoverTimeout = useRef(null);
   const user = true; // Toggle this to test authenticated/unauthenticated states
@@ -156,8 +173,55 @@ const Header = () => {
     }
     return columns;
   };
-
   const categoryColumns = splitCategoriesIntoColumns(categories);
+
+  // Enhanced Account dropdown structure with 4 sections
+  const accountDropdownSections = [
+    {
+      title: "Profile",
+      items: [
+        { name: "My Profile", href: "/profile", icon: UserCircle },
+        { name: "Account Settings", href: "/account/settings", icon: User },
+        {
+          name: "Billing Information",
+          href: "/account/billing",
+          icon: CreditCard,
+        },
+        { name: "Addresses", href: "/account/account-infos", icon: MapPin },
+        { name: "Notifications", href: "/account/notifications", icon: Bell },
+      ],
+    },
+    {
+      title: "Dashboard for Suppliers",
+      items: [
+        { name: "Analytics", href: "/supplier/analytics", icon: BarChart3 },
+        { name: "My Products", href: "/supplier/products", icon: Package2 },
+        { name: "Inventory", href: "/supplier/inventory", icon: Package },
+        { name: "Blog Posts", href: "/supplier/blogs", icon: PenTool },
+        { name: "Orders", href: "/supplier/orders", icon: FileText },
+      ],
+    },
+    {
+      title: "Settings",
+      items: [
+        { name: "General Settings", href: "/account/settings", icon: Settings },
+        { name: "Privacy & Security", href: "/account/security", icon: Shield },
+        {
+          name: "Documents",
+          href: "/account/documents",
+          icon: FileText,
+        },
+      ],
+    },
+    {
+      title: "Help Center",
+      items: [
+        { name: "Support Center", href: "/help/support", icon: HelpCircle },
+        { name: "Contact Us", href: "/help/contact", icon: Phone },
+        { name: "Documentation", href: "/help/docs", icon: BookOpen },
+      ],
+    },
+  ];
 
   const navItems = [
     {
@@ -168,32 +232,32 @@ const Header = () => {
     },
     {
       name: "Explore",
-      href: "/",
+      href: "/products",
       hasDropdown: true,
       icon: null,
       dropdownType: "categories", // Special type for category dropdown
     },
     {
-      name: "Deals",
-      href: "/deals",
+      name: "Stores",
+      href: "/suppliers",
       hasDropdown: false,
       icon: null,
     },
     {
       name: "My Orders",
-      href: "/orders",
+      href: "/account/orders",
       hasDropdown: false,
       icon: null,
     },
     {
-      name: "Favorites",
-      href: "/favorites",
+      name: "Blogs",
+      href: "/blogs",
       hasDropdown: false,
       icon: null,
     },
     {
       name: "Messages",
-      href: "/messages",
+      href: "messages",
       hasDropdown: false,
       icon: null,
     },
@@ -205,15 +269,10 @@ const Header = () => {
     },
     {
       name: "Account",
-      href: "/account",
+      href: "/account/account-infos",
       hasDropdown: true,
       icon: null,
-      dropdownItems: [
-        { name: "Profile", href: "/account/profile", icon: User },
-        { name: "Settings", href: "/account/settings", icon: Settings },
-        { name: "Help Center", href: "/account/help", icon: HelpCircle },
-        { name: "Logout", href: "/logout", icon: LogOut },
-      ],
+      dropdownType: "account", // Special type for account dropdown
     },
   ];
 
@@ -227,13 +286,13 @@ const Header = () => {
 
   const languages = [
     { code: "en", name: "English" },
-    { code: "es", name: "Español" },
     { code: "fr", name: "Français" },
-    { code: "de", name: "Deutsch" },
+    { code: "ar", name: "العربية" },
   ];
 
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const { i18n } = useTranslation();
 
   // Enhanced mouse enter/leave handlers with timeout for better UX
   const handleMouseEnter = (itemName) => {
@@ -297,7 +356,7 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="bg-gradient-to-r from-[#f4f2ed] via-[#f6b868] to-[#1f3b73] shadow-lg sticky top-0 z-50">
+    <header className="bg-gradient-to-r from-[#f4f2ed] to-[#fddcab] shadow-lg sticky top-0 z-50">
       {/* Top Row - Logo, Search, Actions */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -312,35 +371,28 @@ const Header = () => {
           </div>
 
           {/* Desktop Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <div
-              className={`flex w-full bg-slate-800 rounded-lg overflow-hidden transition-all duration-200 ${
-                isSearchFocused ? "ring-2 ring-[#e1a95f]" : ""
-              }`}>
-              <input
-                type="text"
-                placeholder="Search in 20,000+ products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch(e)}
-                className="flex-1 bg-transparent text-white placeholder-gray-400 px-4 py-3 border-none outline-none"
-              />
-              <button
-                onClick={handleSearch}
-                className="bg-[#e1a95f] hover:bg-[#f6b868] px-6 py-3 text-slate-800 font-medium transition-colors duration-200 flex items-center space-x-2">
-                <Search className="h-4 w-4" />
-                <span className="hidden lg:inline">Search</span>
-              </button>
-            </div>
-          </div>
+          <SearchBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isSearchFocused={isSearchFocused}
+            setIsSearchFocused={setIsSearchFocused}
+            onSearch={handleSearch}
+          />
 
           {/* Desktop User Actions */}
           {user ? (
             <div className="hidden md:flex items-center space-x-4">
+              <div
+                className="p-2 cursor-pointer flex items-center justify-center gap-2  text-[#1f3b73]transition-colors duration-200 relative group">
+                <Coins className="h-6 w-6 text-[#1f3b73]" />
+                <span className="text-[#1f3b73] " >
+                  400
+                </span>
+              </div>
               {/* Wishlist */}
-              <button className="p-2 text-white hover:text-[#e1a95f] transition-colors duration-200 relative group">
+              <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
+              onClick={() => navigate("/account/saved")}
+              >
                 <Heart className="h-6 w-6" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
@@ -353,7 +405,9 @@ const Header = () => {
               </button>
 
               {/* Cart */}
-              <button className="p-2 text-white hover:text-[#e1a95f] transition-colors duration-200 relative group">
+              <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
+              onClick={() => navigate("/cart")}
+              >
                 <ShoppingCart className="h-6 w-6" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
@@ -365,13 +419,17 @@ const Header = () => {
                 </span>
               </button>
 
+            
+
               {/* Profile */}
-              <button className="p-2 text-white hover:text-[#e1a95f] transition-colors duration-200 relative group">
+              <Link
+                to="/profile"
+                className="p-2 cursor-pointer text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group">
                 <User className="h-6 w-6" />
                 <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   Profile
                 </span>
-              </button>
+              </Link>
             </div>
           ) : (
             <div className="hidden md:flex items-center space-x-3">
@@ -390,7 +448,7 @@ const Header = () => {
           <div className="md:hidden flex items-center space-x-2">
             {user && (
               <>
-                <button className="p-2 text-white hover:text-[#e1a95f] transition-colors relative">
+                <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors relative">
                   <Heart className="h-5 w-5" />
                   {wishlistCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
@@ -398,7 +456,7 @@ const Header = () => {
                     </span>
                   )}
                 </button>
-                <button className="p-2 text-white hover:text-[#e1a95f] transition-colors relative">
+                <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors relative">
                   <ShoppingCart className="h-5 w-5" />
                   {cartCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
@@ -406,9 +464,11 @@ const Header = () => {
                     </span>
                   )}
                 </button>
-                <button className="p-2 text-white hover:text-[#e1a95f] transition-colors">
+                <Link
+                  to="/profile"
+                  className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors">
                   <User className="h-5 w-5" />
-                </button>
+                </Link>
               </>
             )}
             <button
@@ -515,25 +575,56 @@ const Header = () => {
                         </div>
                       )}
 
-                    {/* Regular Dropdown Menu for other items */}
+                    {/* Enhanced Account Dropdown with 4 Sections */}
                     {item.hasDropdown &&
                       hoveredItem === item.name &&
-                      item.dropdownItems && (
+                      item.dropdownType === "account" && (
                         <div
-                          className="absolute top-full left-0 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-800 border border-slate-700 rounded-lg mt-2 min-w-[200px] z-50 shadow-xl"
+                          className="absolute top-full right-0 border border-slate-700 rounded-lg mt-2 w-[800px] z-50 shadow-xl p-6"
+                          style={{
+                            background:
+                              "linear-gradient(to right, rgba(3, 7, 18, 0.95), rgba(17, 24, 39, 0.9), rgba(31, 41, 55, 0.95))",
+                          }}
                           onMouseEnter={() => handleMouseEnter(item.name)}
                           onMouseLeave={handleMouseLeave}>
-                          {item.dropdownItems.map((dropdownItem, idx) => (
+                          <div className="grid grid-cols-4 gap-6">
+                            {accountDropdownSections.map(
+                              (section, sectionIndex) => (
+                                <div
+                                  key={section.title}
+                                  className={`${
+                                    sectionIndex < 3
+                                      ? "border-r border-slate-600 pr-6"
+                                      : ""
+                                  }`}>
+                                  <h3 className="text-[#e1a95f] font-semibold text-sm mb-4 uppercase tracking-wide">
+                                    {section.title}
+                                  </h3>
+                                  <div className="space-y-3">
+                                    {section.items.map((dropdownItem) => (
+                                      <a
+                                        key={dropdownItem.name}
+                                        href={dropdownItem.href}
+                                        className="flex items-center space-x-3 text-gray-300 hover:text-white text-sm transition-all duration-200 hover:translate-x-1 transform group">
+                                        <dropdownItem.icon className="h-4 w-4 text-gray-400 group-hover:text-[#e1a95f] transition-colors" />
+                                        <span>{dropdownItem.name}</span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
+
+                          {/* Logout Button at the Bottom */}
+                          <div className="border-t border-slate-600 mt-6 pt-4">
                             <a
-                              key={dropdownItem.name}
-                              href={dropdownItem.href}
-                              className="flex items-center space-x-3 px-4 py-3 text-sm text-white hover:text-[#e1a95f] hover:bg-slate-800/50 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg">
-                              {dropdownItem.icon && (
-                                <dropdownItem.icon className="h-4 w-4" />
-                              )}
-                              <span>{dropdownItem.name}</span>
+                              href="/logout"
+                              className="flex items-center space-x-3 text-red-400 hover:text-red-300 text-sm font-medium transition-all duration-200 hover:translate-x-1 transform group">
+                              <LogOut className="h-4 w-4 group-hover:text-red-300 transition-colors" />
+                              <span>Logout</span>
                             </a>
-                          ))}
+                          </div>
                         </div>
                       )}
                   </div>
@@ -559,6 +650,7 @@ const Header = () => {
                       onClick={() => {
                         setSelectedLanguage(lang);
                         setIsLanguageOpen(false);
+                        i18n.changeLanguage(lang.code);
                       }}
                       className="w-full text-left px-4 py-3 text-sm text-white hover:text-[#e1a95f] hover:bg-slate-800/50 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg">
                       {lang.name}
@@ -628,74 +720,33 @@ const Header = () => {
                           </div>
                         )}
 
-                      {/* Mobile Regular Dropdown Items */}
+                      {/* Mobile Account Dropdown with Sections */}
                       {item.hasDropdown &&
                         mobileDropdownOpen === item.name &&
-                        item.dropdownItems && (
-                          <div className="ml-4 mt-2 space-y-1 border-l-2 border-slate-700 pl-4">
-                            {item.dropdownItems.map((dropdownItem) => (
-                              <a
-                                key={dropdownItem.name}
-                                href={dropdownItem.href}
-                                className="flex items-center space-x-3 px-3 py-2 text-base text-gray-300 hover:text-[#e1a95f] transition-colors duration-200">
-                                {dropdownItem.icon && (
-                                  <dropdownItem.icon className="h-4 w-4" />
-                                )}
-                                <span>{dropdownItem.name}</span>
-                              </a>
+                        item.dropdownType === "account" && (
+                          <div className="ml-4 mt-2 space-y-6 border-l-2 border-slate-700 pl-4 max-h-96 overflow-y-auto">
+                            {accountDropdownSections.map((section) => (
+                              <div key={section.title} className="space-y-2">
+                                <h4 className="text-[#e1a95f] font-semibold text-sm uppercase tracking-wide">
+                                  {section.title}
+                                </h4>
+                                <div className="ml-2 space-y-1">
+                                  {section.items.map((dropdownItem) => (
+                                    <a
+                                      key={dropdownItem.name}
+                                      href={dropdownItem.href}
+                                      className="flex items-center space-x-3 text-gray-300 hover:text-[#e1a95f] text-sm transition-colors duration-200 py-1">
+                                      <dropdownItem.icon className="h-4 w-4" />
+                                      <span>{dropdownItem.name}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
                             ))}
                           </div>
                         )}
                     </div>
                   )
-                )}
-
-                {/* Mobile Language Selector */}
-                <div className="border-t border-slate-700 pt-3 mt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-3 py-2 text-white flex items-center space-x-2">
-                      <Globe className="h-4 w-4" />
-                      <span>Language</span>
-                    </span>
-                    <button
-                      onClick={() => toggleMobileDropdown("language")}
-                      className="p-2 text-white hover:text-[#e1a95f] transition-colors">
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform duration-200 ${
-                          mobileDropdownOpen === "language" ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  {mobileDropdownOpen === "language" && (
-                    <div className="ml-4 mt-2 space-y-1 border-l-2 border-slate-700 pl-4">
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setSelectedLanguage(lang);
-                            setMobileDropdownOpen(null);
-                          }}
-                          className="block w-full text-left px-3 py-2 text-base text-gray-300 hover:text-[#e1a95f] transition-colors duration-200">
-                          {lang.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile Auth Buttons */}
-                {!user && (
-                  <div className="border-t border-slate-700 pt-3 mt-3 space-y-2">
-                    <Button
-                      variant="ghost"
-                      className="w-full text-white hover:text-[#e1a95f] hover:bg-white/10 transition-all duration-200">
-                      Sign In
-                    </Button>
-                    <Button className="w-full bg-[#e1a95f] hover:bg-[#f6b868] text-[#1f3b73] transition-all duration-200">
-                      Sign Up
-                    </Button>
-                  </div>
                 )}
               </div>
             </div>

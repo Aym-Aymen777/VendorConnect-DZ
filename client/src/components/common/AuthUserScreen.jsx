@@ -2,8 +2,12 @@ import { useRef, useState} from 'react'
 import Header from './Header'
 import FlashDealTimer from '../ui/FlashDealTimer'
 import AutoImageSlider from '../ui/AutoImageSlider'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight,ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import InspirationGallery from '../ui/InspirationGallery'
+import TopPicksSlider from '../ui/TopPicksSlider'
+import TopSuppliersSection from '../ui/TopSuppliersSection'
+import BlogsAndContent from '../ui/BlogsAndContent'
 
 const categories = [
   {
@@ -338,12 +342,13 @@ const AuthUserScreen = () => {
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1f3b73]">Flash Deals ⚡</h2>
         <FlashDealTimer />
       </div>
-      <Link
-        to="/flash-deals"
-        className="text-[#e1a95f] text-sm sm:text-base font-medium hover:underline self-start sm:self-auto"
-      >
-        See more
-      </Link>
+      <Link 
+            href="#" 
+            className="text-[#1f3b73] hover:text-[#e1a95f] font-semibold transition-colors duration-200 flex items-center gap-2"
+          >
+            See More
+            <ExternalLink size={16} />
+          </Link>
     </div>
     <div
       className="
@@ -500,6 +505,18 @@ const AuthUserScreen = () => {
     </div>
   )}
 </section>
+
+{/* Top Picks Section */}
+<TopPicksSlider/>
+
+{/* Room ideas & inspiration gallery section */}
+ <InspirationGallery/>
+
+{/* Top Suppliers Section */}
+ <TopSuppliersSection/>
+
+ {/* Blogs and Content Section */}
+ <BlogsAndContent/>
 
 
 

@@ -13,6 +13,8 @@ router.get("/supplier/:id", ProtectRoute, getSupplierProfile);
 
 router.post("/documents", ProtectRoute,submitDocsAndBecomeSupplier);
 
+//TODO add supplier routes
+
 
 
 export const userRoutes = router;
