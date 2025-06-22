@@ -20,8 +20,13 @@ import {
   ChevronDown,
   ChevronRight
 } from "lucide-react";
+// import { Link } from "react-router-dom"; // Commented out for artifact compatibility
 import Header from "../components/common/Header";
 import useSearchStore from "../store/SearchStore";
+import ProductsFlexContainer from "../components/marketplace/ProductFlexContainer";
+import CategoryMenu from "../components/marketplace/CategoryMenu";
+import AutoSponsoringsSlider from "../components/marketplace/AutoSponsoringsSlider";
+
 
 // Enhanced categories with icons
 const categories = [
@@ -223,188 +228,6 @@ const products = [
   }
 ];
 
-function CategoryMenu({ categories, tab, setTab, expandedCategories, toggleCategory, onItemClick }) {
-  return (
-    <div className="space-y-2">
-      {categories.map((category) => (
-        <div key={category.category}>
-          <div className="flex items-center">
-            <TabsTrigger
-              value={category.category}
-              className="flex-1 justify-start gap-3 px-4 py-3 text-left bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white transition-all duration-200 rounded-xl border-0"
-              onClick={onItemClick}
-            >
-              {category.icon}
-              <span className="font-medium">{category.category}</span>
-            </TabsTrigger>
-            <button
-              onClick={() => toggleCategory(category.category)}
-              className="p-2 hover:bg-[#e1a95f]/10 rounded-lg transition-colors ml-2"
-            >
-              {expandedCategories.includes(category.category) ? (
-                <ChevronDown size={16} className="text-[#1f3b73]" />
-              ) : (
-                <ChevronRight size={16} className="text-[#1f3b73]" />
-              )}
-            </button>
-          </div>
-          
-          {/* Subcategories with scrollable container */}
-          {expandedCategories.includes(category.category) && (
-            <div className="ml-4 mt-2 max-h-48 overflow-y-auto border-l-2 border-[#e1a95f]/30 pl-4">
-              <div className="space-y-1">
-                {category.subcategories.map((subcategory) => (
-                  <button
-                    key={subcategory}
-                    onClick={onItemClick}
-                    className="block w-full text-left px-3 py-2 text-sm text-[#1f3b73] hover:bg-[#e1a95f]/10 rounded-lg transition-colors"
-                  >
-                    {subcategory}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ProductCard({ item, onAddToCart, onToggleFavorite, isFavorite }) {
-  const [isHovered, setIsHovered] = useState(false);
-  
-  return (
-    <div
-      className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 w-80 flex-shrink-0"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Image Container */}
-      <div className="relative overflow-hidden h-64">
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-          loading="lazy"
-        />
-        
-        {/* Overlay with quick actions */}
-        <div className={`absolute inset-0 bg-[#1f3b73]/40 flex items-center justify-center gap-3 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-          <button className="bg-white p-3 rounded-full hover:bg-[#f4f2ed] transition-colors">
-            <Eye size={20} className="text-[#1f3b73]" />
-          </button>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite(item.id);
-            }}
-            className="bg-white p-3 rounded-full hover:bg-[#f4f2ed] transition-colors">
-            <Heart size={20} className={isFavorite ? "text-red-500 fill-red-500" : "text-[#1f3b73]"} />
-          </button>
-        </div>
-        
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex gap-2">
-          {item.isNew && (
-            <span className="bg-[#e1a95f] text-white px-3 py-1 rounded-full text-xs font-semibold">
-              NEW
-            </span>
-          )}
-          {item.isFlashDeal && (
-            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold animate-pulse">
-              <Zap size={12} className="inline mr-1" />
-              FLASH
-            </span>
-          )}
-          {item.discount > 0 && (
-            <span className="bg-[#1f3b73] text-white px-3 py-1 rounded-full text-xs font-semibold">
-              -{item.discount}%
-            </span>
-          )}
-        </div>
-        
-        {/* Favorite button */}
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite(item.id);
-          }}
-          className="absolute top-3 right-3 bg-white/90 p-2 rounded-full hover:bg-white transition-colors">
-          <Heart size={16} className={isFavorite ? "text-red-500 fill-red-500" : "text-[#1f3b73]"} />
-        </button>
-      </div>
-      
-      {/* Content */}
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={14}
-                className={`${
-                  i < Math.floor(item.rating)
-                    ? "text-[#e1a95f] fill-[#e1a95f]"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-gray-600">
-            {item.rating} ({item.reviews})
-          </span>
-        </div>
-        
-        <h3 className="font-bold text-lg text-[#1f3b73] mb-2 line-clamp-2">
-          {item.title}
-        </h3>
-        
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-          {item.description}
-        </p>
-        
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-[#1f3b73]">{item.price}</span>
-            {item.originalPrice && (
-              <span className="text-sm text-gray-500 line-through">{item.originalPrice}</span>
-            )}
-          </div>
-        </div>
-        
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart(item);
-          }}
-          className="w-full bg-[#e1a95f] text-white font-semibold py-3 px-6 rounded-xl hover:bg-[#d19a54] transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          <ShoppingCart size={18} />
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ProductsFlexContainer({ items, onAddToCart, onToggleFavorite, favorites }) {
-  return (
-    <div className="flex gap-6 overflow-x-auto pb-4">
-      {items.map((item) => (
-        <ProductCard
-          key={item.id}
-          item={item}
-          onAddToCart={onAddToCart}
-          onToggleFavorite={onToggleFavorite}
-          isFavorite={favorites.includes(item.id)}
-        />
-      ))}
-    </div>
-  );
-}
-
-
 export default function Marketplace() {
   const [tab, setTab] = useState("featured");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -480,12 +303,12 @@ export default function Marketplace() {
     <div className="min-h-screen bg-[#f4f2ed]">
       {/* Header */}
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <Tabs value={tab} onValueChange={setTab} className="flex flex-col lg:flex-row gap-8">
-          {/* Enhanced Responsive Sidebar */}
-          <div className="lg:w-80">
+      <div className=" mx-10 px-4 py-8">
+        <Tabs value={tab} onValueChange={setTab} className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+          {/* Enhanced Responsive Sidebar - Moved to the left */}
+          <div className="lg:w-80 lg:-ml-4">
             <button
-              className="lg:hidden mb-4 bg-white p-3 rounded-xl shadow border border-[#1f3b73]/10 flex items-center gap-2"
+              className="lg:hidden mb-4 bg-white p-3 rounded-xl shadow border border-[#1f3b73]/10 flex items-center gap-2 w-full sm:w-auto"
               onClick={() => setIsMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -494,7 +317,7 @@ export default function Marketplace() {
             </button>
             <div className={`bg-white rounded-2xl shadow-lg border border-[#1f3b73]/10 transition-all duration-300 ${
               isMenuOpen ? 'block' : 'hidden lg:block'
-            } ${isMenuOpen ? 'fixed inset-4 z-50 lg:relative lg:inset-auto overflow-y-auto' : ''}`}>
+            } ${isMenuOpen ? 'fixed inset-2 sm:inset-4 z-50 lg:relative lg:inset-auto overflow-y-auto' : 'lg:sticky lg:top-4'} lg:h-[90vh] lg:py-10`}>
               
               {/* Mobile close button */}
               {isMenuOpen && (
@@ -502,56 +325,56 @@ export default function Marketplace() {
                   <h2 className="text-xl font-bold text-[#1f3b73]">Categories</h2>
                   <button 
                     onClick={() => setIsMenuOpen(false)}
-                    className="p-2 hover:bg-[#f4f2ed] rounded-lg"
+                    className="p-2 hover:bg-[#f4f2ed] rounded-lg transition-colors"
                   >
                     <X size={20} className="text-[#1f3b73]" />
                   </button>
                 </div>
               )}
               
-              <div className="p-6 h-[80vh]">
+              <div className="p-4 sm:p-6 h-full overflow-y-auto">
                 <h2 className="text-xl font-bold text-[#1f3b73] mb-6 hidden lg:block">Categories</h2>
                 
-                <TabsList className="flex flex-col gap-3 bg-transparent p-0">
+                <TabsList className="flex flex-col gap-2 sm:gap-3 bg-transparent p-0 w-full">
                   {/* Special tabs */}
                   <TabsTrigger
                     value="featured"
-                    className="w-full justify-start gap-3 px-4 py-4 bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white rounded-xl transition-all duration-200 border-0"
+                    className="w-full justify-start gap-3 px-3 sm:px-4 py-3 sm:py-4 bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white rounded-xl transition-all duration-200 border-0 text-left"
                     onClick={handleMenuItemClick}
                   >
-                    <Sparkles size={18} />
-                    <div className="text-left">
-                      <div className="font-semibold">Featured Products</div>
-                      <div className="text-xs opacity-80">Handpicked for you</div>
+                    <Sparkles size={18} className="flex-shrink-0" />
+                    <div className="text-left min-w-0 flex-1">
+                      <div className="font-semibold text-sm sm:text-base truncate">Featured Products</div>
+                      <div className="text-xs opacity-80 truncate">Handpicked for you</div>
                     </div>
                   </TabsTrigger>
 
                   <TabsTrigger
                     value="flash"
-                    className="w-full justify-start gap-3 px-4 py-4 bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white rounded-xl transition-all duration-200 border-0"
+                    className="w-full justify-start gap-3 px-3 sm:px-4 py-3 sm:py-4 bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white rounded-xl transition-all duration-200 border-0 text-left"
                     onClick={handleMenuItemClick}
                   >
-                    <Zap size={18} />
-                    <div className="text-left">
-                      <div className="font-semibold">Flash Deals</div>
-                      <div className="text-xs opacity-80">Limited time offers</div>
+                    <Zap size={18} className="flex-shrink-0" />
+                    <div className="text-left min-w-0 flex-1">
+                      <div className="font-semibold text-sm sm:text-base truncate">Flash Deals</div>
+                      <div className="text-xs opacity-80 truncate">Limited time offers</div>
                     </div>
                   </TabsTrigger>
 
                   <TabsTrigger
                     value="new"
-                    className="w-full justify-start gap-3 px-4 py-4 bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white rounded-xl transition-all duration-200 border-0"
+                    className="w-full justify-start gap-3 px-3 sm:px-4 py-3 sm:py-4 bg-white hover:bg-[#e1a95f]/10 data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white rounded-xl transition-all duration-200 border-0 text-left"
                     onClick={handleMenuItemClick}
                   >
-                    <TrendingUp size={18} />
-                    <div className="text-left">
-                      <div className="font-semibold">New Arrivals</div>
-                      <div className="text-xs opacity-80">Latest products</div>
+                    <TrendingUp size={18} className="flex-shrink-0" />
+                    <div className="text-left min-w-0 flex-1">
+                      <div className="font-semibold text-sm sm:text-base truncate">New Arrivals</div>
+                      <div className="text-xs opacity-80 truncate">Latest products</div>
                     </div>
                   </TabsTrigger>
 
                   {/* Categories with expandable subcategories */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 w-full">
                     <CategoryMenu 
                       categories={categories}
                       tab={tab}
@@ -567,27 +390,33 @@ export default function Marketplace() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {/* Results header */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-bold text-[#1f3b73]">
+            {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1f3b73] truncate">
                   {tab === "featured" && "Featured Products"}
                   {tab === "flash" && "Flash Deals"}
                   {tab === "new" && "New Arrivals"}
                   {categories.find(c => c.category === tab)?.category}
                 </h2>
-                <p className="text-gray-600">{filteredProducts.length} products found</p>
+                <p className="text-gray-600 text-sm sm:text-base">{filteredProducts.length} products found</p>
               </div>
               
-              <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-[#1f3b73]/10">
+              <button className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-[#1f3b73]/10 flex-shrink-0">
                 <Filter size={16} className="text-[#1f3b73]" />
-                <span className="text-[#1f3b73]">Filters</span>
+                <span className="text-[#1f3b73] text-sm sm:text-base">Filters</span>
               </button>
+            </div> */}
+
+            {/* START: Sponsorings Above Products */}
+            <div className="h-32 lg:h-50 mb-5">
+              <AutoSponsoringsSlider />
             </div>
+            {/* END: Sponsorings Box Above Products */}
 
             {/* Products Flex Container */}
-            <TabsContent value={tab} className="mt-0">
+            <TabsContent value={tab} className="mt-0 w-full">
               {filteredProducts.length > 0 ? (
                 <ProductsFlexContainer 
                   items={filteredProducts}
@@ -596,12 +425,12 @@ export default function Marketplace() {
                   favorites={favorites}
                 />
               ) : (
-                <div className="text-center py-16">
+                <div className="text-center py-12 sm:py-16">
                   <div className="text-[#1f3b73]/40 mb-4">
-                    <Search size={48} className="mx-auto" />
+                    <Search size={36} sm:size={48} className="mx-auto" />
                   </div>
-                  <h3 className="text-xl font-semibold text-[#1f3b73] mb-2">No products found</h3>
-                  <p className="text-gray-600">Try adjusting your search or browse different categories</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-[#1f3b73] mb-2">No products found</h3>
+                  <p className="text-gray-600 text-sm sm:text-base px-4">Try adjusting your search or browse different categories</p>
                 </div>
               )}
             </TabsContent>
@@ -610,8 +439,8 @@ export default function Marketplace() {
       </div>
 
       {/* Mobile cart/favorites floating buttons */}
-      <div className="md:hidden fixed bottom-4 right-4 flex flex-col gap-3">
-        <button className="relative bg-white p-3 rounded-full shadow-lg border border-[#1f3b73]/10">
+      <div className="md:hidden fixed bottom-4 right-4 flex flex-col gap-3 z-30">
+        <button className="relative bg-white p-3 rounded-full shadow-lg border border-[#1f3b73]/10 transition-all hover:shadow-xl">
           <Heart size={20} className="text-red-500" />
           {favorites.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-[#e1a95f] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
@@ -619,7 +448,7 @@ export default function Marketplace() {
             </span>
           )}
         </button>
-        <button className="relative bg-[#1f3b73] text-white p-3 rounded-full shadow-lg">
+        <button className="relative bg-[#1f3b73] text-white p-3 rounded-full shadow-lg transition-all hover:shadow-xl">
           <ShoppingCart size={20} />
           {cartItems.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-[#e1a95f] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
@@ -632,10 +461,9 @@ export default function Marketplace() {
       {/* Mobile overlay backdrop */}
       {isMenuOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black/30 z-40"
+          className="lg:hidden fixed inset-0 bg-black/30 z-40 transition-opacity"
           onClick={() => setIsMenuOpen(false)}
-        >
-        </div>
+        />
       )}
     </div>
   );
