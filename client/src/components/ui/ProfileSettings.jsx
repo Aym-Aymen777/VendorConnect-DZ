@@ -1,35 +1,40 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { User, Shield, Package,Menu, Store, CreditCard, Megaphone, Heart, MessageCircle, FileText, Bell, File, Users, HelpCircle, Save, Edit3, Upload, Eye, EyeOff, Check, X } from "lucide-react";
+import { User, Shield, Package, Menu, Store, CreditCard, Megaphone, Heart, MessageCircle, FileText, Bell, File, Users, HelpCircle, Save, Edit3, Upload, Eye, EyeOff, Check, X } from "lucide-react";
 import Header from "../common/Header";
 import { useTranslation } from "react-i18next";
 
 export default function ProfileSettings() {
-  const { query } = useParams();
+  const { tab: urlTab } = useParams(); // Get tab from URL params
   const navigate = useNavigate();
-  const [tab, setTab] = useState(query || "account");
-  //const [showPassword, setShowPassword] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-   const { t } = useTranslation();
-
-  useEffect(() => {
-    if (query) {
-      setTab(query);
-    }
-  }, [query]);
-
-  const handleTabChange = (newTab) => {
-    setTab(newTab);
-    navigate(`/account/${newTab}`);
-  };
+  const location = useLocation();
+  const { t } = useTranslation();
+  
+  // Set initial tab from URL param or default to "account-infos"
+  const [activeTab, setActiveTab] = useState(urlTab || "account-infos");
   const [showPassword, setShowPassword] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,
     push: true,
     marketing: false
   });
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab, activeTab]);
+
+  // Handle tab change - update URL and state
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    navigate(`/account/${newTab}`, { replace: true });
+  };
 
   const tabItems = [
     { value: "account-infos", label: `${t('account.info')}`, icon: User },
@@ -67,14 +72,14 @@ export default function ProfileSettings() {
 
   return (
     <div className="min-h-screen bg-[#f4f2ed]">
-        <Header/>
+      <Header/>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-[#1f3b73] mb-2">Profile Settings</h1>
           <p className="text-[#1f3b73]/70">Manage your account preferences and settings</p>
         </div>
 
-        <Tabs value={tab} onValueChange={handleTabChange} className="grid lg:grid-cols-5 gap-8">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="grid lg:grid-cols-5 gap-8">
           {/* Hamburger menu for sm/md screens */}
           <div className="lg:hidden mb-4">
             <button
@@ -95,7 +100,7 @@ export default function ProfileSettings() {
                         key={item.value}
                         value={item.value}
                         asChild
-                        onClick={() => setShowMenu((v) => !v)}
+                        onClick={() => setShowMenu(false)}
                         className="w-full justify-start gap-3 px-4 py-3 text-left data-[state=active]:bg-[#1f3b73] data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-[#e1a95f]/20 transition-all duration-200 rounded-xl"
                       >
                         <Link
@@ -137,7 +142,6 @@ export default function ProfileSettings() {
               })}
             </TabsList>
           </div>
-
 
           <div className="lg:col-span-4">
             <div className="bg-white rounded-2xl shadow-lg border border-[#1f3b73]/10 overflow-hidden">

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import  useAuthStore  from '../store/AuthStore';
+import { toast } from 'sonner';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -7,10 +9,25 @@ const Login = () => {
     password: '',
     remember: false
   });
+  const {login } = useAuthStore();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    // Add your login logic here
+    try {
+      const { email, password } = formData;
+      if (!email || !password) {
+        toast.error("Please fill in all required fields.");
+        return;
+      }
+     const res = await login({email, password});
+     if (res?.success) {
+      navigate('/');
+    } 
+    } catch (error) {
+      console.error("Error logging in:", error);
+    }
+    
   };
 
   return (

@@ -1,20 +1,57 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link , useNavigate} from 'react-router-dom';
+import useAuthStore from '../store/AuthStore.js';
+import { toast } from 'sonner';
+
 
 const Register = () => {
+
+  const{register} = useAuthStore();
+  const navigate = useNavigate();
+
+
   const [formData, setFormData] = useState({
-    fullName: '',
+    username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    agreeToTerms: false
+    confirmedPassword: '',
+    isApproveToPolicy: false
   });
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Add your registration logic here
-  };
+  const { username, email, password, confirmedPassword, isApproveToPolicy } = formData;
 
+  if (!username || !email || !password) {
+    toast.error("Please fill in all required fields.");
+    return;
+  }
+
+  if (password !== confirmedPassword) {
+    toast.error("Passwords do not match.");
+    return;
+  }
+
+  if (!isApproveToPolicy) {
+    toast.error("You must agree to the terms and privacy policy.");
+    return;
+  }
+
+  try {
+    const res = await register({
+      username,
+      email,
+      password,
+      confirmedPassword,
+      isApproveToPolicy
+    });
+    if (res?.success) {
+      navigate('/login');
+    } 
+  } catch (err) {
+    console.error(err);
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f2ed] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
@@ -36,8 +73,8 @@ const Register = () => {
                     focus:border-[#e1a95f] focus:ring-2 focus:ring-[#e1a95f]/20 
                     text-[#1f3b73] placeholder-gray-400 transition-all duration-300"
                   placeholder="Enter your username"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  value={formData.username}
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
                 />
               </div>
 
@@ -81,8 +118,8 @@ const Register = () => {
                     focus:border-[#e1a95f] focus:ring-2 focus:ring-[#e1a95f]/20 
                     text-[#1f3b73] placeholder-gray-400 transition-all duration-300"
                   placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  value={formData.confirmedPassword}
+                  onChange={(e) => setFormData({...formData, confirmedPassword: e.target.value})}
                 />
               </div>
 
@@ -90,8 +127,8 @@ const Register = () => {
                 <input
                   type="checkbox"
                   className="h-4 w-4 text-[#e1a95f] focus:ring-[#e1a95f]/20 border-gray-300 rounded"
-                  checked={formData.agreeToTerms}
-                  onChange={(e) => setFormData({...formData, agreeToTerms: e.target.checked})}
+                  checked={formData.isApproveToPolicy}
+                  onChange={(e) => setFormData({...formData, isApproveToPolicy: e.target.checked})}
                 />
                 <label className="ml-2 block text-sm text-gray-600">
                   I agree to the{' '}
@@ -105,6 +142,7 @@ const Register = () => {
                 </label>
               </div>
 
+             
               <button
                 type="submit"
                 className="w-full bg-[#e1a95f] text-white py-3 px-4 rounded-lg font-semibold
@@ -113,6 +151,8 @@ const Register = () => {
               >
                 Create Account
               </button>
+            
+
             </form>
 
             <div className="mt-6 text-center">

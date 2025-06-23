@@ -34,6 +34,8 @@ import { Link , useNavigate} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SearchBar from "../marketplace/SearchBar";
 import useSearchStore from "../../store/SearchStore";
+import { useAuthCheck } from "../../hooks/useAuthCheck";
+import  useAuthStore  from "../../store/AuthStore";
 
 
 const Header = () => {
@@ -47,7 +49,8 @@ const Header = () => {
   const navigate = useNavigate();
 
   const hoverTimeout = useRef(null);
-  const user = true; // Toggle this to test authenticated/unauthenticated states
+    const { user, isAuthenticated, loading } = useAuthCheck()
+  const {logout} = useAuthStore();
 
   const categories = [
     {
@@ -181,7 +184,7 @@ const Header = () => {
       title: "Profile",
       items: [
         { name: "My Profile", href: "/profile", icon: UserCircle },
-        { name: "Account Settings", href: "/account/settings", icon: User },
+        { name: "Account Settings", href: "/account/account-infos", icon: User },
         {
           name: "Billing Information",
           href: "/account/billing",
@@ -204,7 +207,7 @@ const Header = () => {
     {
       title: "Settings",
       items: [
-        { name: "General Settings", href: "/account/settings", icon: Settings },
+        { name: "General Settings", href: "/account/account-infos", icon: Settings },
         { name: "Privacy & Security", href: "/account/security", icon: Shield },
         {
           name: "Documents",
@@ -282,6 +285,8 @@ const Header = () => {
     { name: "Join Us", href: "#joinUs", hasDropdown: false },
     { name: "Services", href: "#services", hasDropdown: false },
     { name: "Contact", href: "#contact", hasDropdown: false },
+    { name: "Login", href: "/login", hasDropdown: false, isAuth: true },
+    { name: "Register", href: "/register", hasDropdown: false, isAuth: true },
   ];
 
   const languages = [
@@ -332,6 +337,12 @@ const Header = () => {
       .trim("-"); // Remove leading/trailing hyphens
   };
 
+  // Handle logout function
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -356,7 +367,7 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="bg-gradient-to-r from-[#f4f2ed] to-[#fddcab] shadow-lg sticky top-0 z-50">
+    <header className="bg-gradient-to-r from-[#f4f2ed] to-[#f9f7f2] shadow-lg sticky top-0 z-50">
       {/* Top Row - Logo, Search, Actions */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -382,16 +393,16 @@ const Header = () => {
           {/* Desktop User Actions */}
           {user ? (
             <div className="hidden md:flex items-center space-x-4">
-              <div
-                className="p-2 cursor-pointer flex items-center justify-center gap-2  text-[#1f3b73]transition-colors duration-200 relative group">
+              <div className="p-2 cursor-pointer flex items-center justify-center gap-2 text-[#1f3b73] transition-colors duration-200 relative group">
                 <Coins className="h-6 w-6 text-[#1f3b73]" />
-                <span className="text-[#1f3b73] " >
+                <span className="text-[#1f3b73]">
                   400
                 </span>
               </div>
               {/* Wishlist */}
-              <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
-              onClick={() => navigate("/account/saved")}
+              <button 
+                className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
+                onClick={() => navigate("/account/saved")}
               >
                 <Heart className="h-6 w-6" />
                 {wishlistCount > 0 && (
@@ -405,8 +416,9 @@ const Header = () => {
               </button>
 
               {/* Cart */}
-              <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
-              onClick={() => navigate("/cart")}
+              <button 
+                className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
+                onClick={() => navigate("/cart")}
               >
                 <ShoppingCart className="h-6 w-6" />
                 {cartCount > 0 && (
@@ -418,8 +430,6 @@ const Header = () => {
                   Cart
                 </span>
               </button>
-
-            
 
               {/* Profile */}
               <Link
@@ -433,14 +443,16 @@ const Header = () => {
             </div>
           ) : (
             <div className="hidden md:flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                className="text-white hover:text-[#e1a95f] hover:bg-white/10 transition-all duration-200">
-                Sign In
-              </Button>
-              <Button className="bg-[#e1a95f] text-[#1f3b73] hover:bg-[#f6b868] transition-all duration-200 shadow-md hover:shadow-lg">
-                Sign Up
-              </Button>
+              <Link to="/login">
+                <Button className="bg-[#e1a95f] text-[#1f3b73] hover:bg-[#f6b868] transition-all duration-200 shadow-md hover:shadow-lg">
+                  Log In
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button className="bg-[#e1a95f] text-[#1f3b73] hover:bg-[#f6b868] transition-all duration-200 shadow-md hover:shadow-lg">
+                  Register
+                </Button>
+              </Link>
             </div>
           )}
 
@@ -473,7 +485,7 @@ const Header = () => {
             )}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 text-white hover:text-[#e1a95f] transition-colors duration-200">
+              className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200">
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
               ) : (
@@ -518,14 +530,14 @@ const Header = () => {
                     }
                     onMouseLeave={() => item.hasDropdown && handleMouseLeave()}
                     className="relative">
-                    <a
-                      href={item.href}
+                    <Link
+                      to={item.href}
                       className={`flex items-center space-x-1 text-sm font-medium transition-colors duration-200 hover:text-[#e1a95f] ${
                         index === 0 ? "text-[#e1a95f]" : "text-white"
                       }`}>
                       <span>{item.name}</span>
                       {item.hasDropdown && <ChevronDown className="h-4 w-4" />}
-                    </a>
+                    </Link>
 
                     {/* Enhanced Categories Dropdown for Explore */}
                     {item.hasDropdown &&
@@ -602,13 +614,13 @@ const Header = () => {
                                   </h3>
                                   <div className="space-y-3">
                                     {section.items.map((dropdownItem) => (
-                                      <a
+                                      <Link
                                         key={dropdownItem.name}
-                                        href={dropdownItem.href}
+                                        to={dropdownItem.href}
                                         className="flex items-center space-x-3 text-gray-300 hover:text-white text-sm transition-all duration-200 hover:translate-x-1 transform group">
                                         <dropdownItem.icon className="h-4 w-4 text-gray-400 group-hover:text-[#e1a95f] transition-colors" />
                                         <span>{dropdownItem.name}</span>
-                                      </a>
+                                      </Link>
                                     ))}
                                   </div>
                                 </div>
@@ -618,12 +630,12 @@ const Header = () => {
 
                           {/* Logout Button at the Bottom */}
                           <div className="border-t border-slate-600 mt-6 pt-4">
-                            <a
-                              href="/logout"
+                            <button
+                              onClick={handleLogout}
                               className="flex items-center space-x-3 text-red-400 hover:text-red-300 text-sm font-medium transition-all duration-200 hover:translate-x-1 transform group">
                               <LogOut className="h-4 w-4 group-hover:text-red-300 transition-colors" />
                               <span>Logout</span>
-                            </a>
+                            </button>
                           </div>
                         </div>
                       )}
@@ -669,13 +681,13 @@ const Header = () => {
                   (item, index) => (
                     <div key={item.name}>
                       <div className="flex items-center justify-between">
-                        <a
-                          href={item.href}
+                        <Link
+                          to={item.href}
                           className={`flex items-center space-x-2 px-3 py-2 text-lg font-medium transition-colors duration-200 hover:text-[#e1a95f] flex-1 ${
-                            index === 0 ? "text-[#e1a95f]" : "text-white"
+                            index === 0 ? "text-[#e1a95f]" : item.isAuth ? "bg-[#e1a95f] text-[#1f3b73] rounded-lg hover:bg-[#f6b868] hover:text-[#1f3b73]" : "text-white"
                           }`}>
                           <span>{item.name}</span>
-                        </a>
+                        </Link>
                         {item.hasDropdown && (
                           <button
                             onClick={() => toggleMobileDropdown(item.name)}
@@ -705,14 +717,14 @@ const Header = () => {
                                 </h4>
                                 <div className="ml-2 space-y-1">
                                   {category.subcategories.map((subcategory) => (
-                                    <a
+                                    <Link
                                       key={subcategory}
-                                      href={`/products/${createSlug(
+                                      to={`/products/${createSlug(
                                         category.category
                                       )}/${createSlug(subcategory)}`}
                                       className="block text-gray-300 hover:text-[#e1a95f] text-sm transition-colors duration-200 py-1">
                                       {subcategory}
-                                    </a>
+                                    </Link>
                                   ))}
                                 </div>
                               </div>
@@ -732,22 +744,66 @@ const Header = () => {
                                 </h4>
                                 <div className="ml-2 space-y-1">
                                   {section.items.map((dropdownItem) => (
-                                    <a
+                                    <Link
                                       key={dropdownItem.name}
-                                      href={dropdownItem.href}
+                                      to={dropdownItem.href}
                                       className="flex items-center space-x-3 text-gray-300 hover:text-[#e1a95f] text-sm transition-colors duration-200 py-1">
                                       <dropdownItem.icon className="h-4 w-4" />
                                       <span>{dropdownItem.name}</span>
-                                    </a>
+                                    </Link>
                                   ))}
                                 </div>
                               </div>
                             ))}
+                            
+                            {/* Mobile Logout Button */}
+                            <div className="border-t border-slate-700 pt-4 mt-4">
+                              <button
+                                onClick={handleLogout}
+                                className="flex items-center space-x-3 text-red-400 hover:text-red-300 text-sm font-medium transition-colors duration-200">
+                                <LogOut className="h-4 w-4" />
+                                <span>Logout</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                     </div>
                   )
                 )}
+
+                {/* Language Selector for Mobile */}
+                <div className="border-t border-slate-700 pt-4 mt-4">
+                  <button
+                    onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-lg font-medium text-white hover:text-[#e1a95f] transition-colors duration-200">
+                    <div className="flex items-center space-x-2">
+                      <Globe className="h-5 w-5" />
+                      <span>{selectedLanguage.name}</span>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${
+                        isLanguageOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isLanguageOpen && (
+                    <div className="ml-4 mt-2 space-y-1 border-l-2 border-slate-700 pl-4">
+                      {languages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            setSelectedLanguage(lang);
+                            setIsLanguageOpen(false);
+                            i18n.changeLanguage(lang.code);
+                          }}
+                          className="block w-full text-left px-3 py-2 text-gray-300 hover:text-[#e1a95f] text-sm transition-colors duration-200">
+                          {lang.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

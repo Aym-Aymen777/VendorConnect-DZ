@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-    origin: envVars.nodeEnv=== 'production' ? envVars.clientUrl : 'http://localhost:3100', // Allow requests from the client URL in production
+    origin: envVars.nodeEnv=== 'production' ? envVars.clientUrl : 'http://localhost:5173', // Allow requests from the client URL in production
     credentials: true, // Allow cookies to be sent
 }));
 

@@ -1,10 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 
 // Components
 import Footer from "./components/common/Footer";
 import SubAdminDashboard from "./pages/SubAdmin";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
@@ -25,6 +27,7 @@ const Cart = lazy(() => import("./components/product/Cart"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+
 function App() {
   return (
     <>
@@ -39,6 +42,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/account/:tab" element={<ProfileSettings />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/products" element={<Marketplace />} />
@@ -58,7 +63,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      <Toaster />
+      <Toaster richColors position="top-right"/>
       <Footer />
     </>
   );

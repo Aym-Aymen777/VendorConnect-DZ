@@ -21,11 +21,21 @@ export const getUserProfile = async (req, res) => {
 };
 
 export const updateUserProfile = async (req, res) => {
-  const { name, email , password,newPassword,profile,phone} = req.body;
+  const { name, email , password,newPassword,profile,phone,username,dateOfBirth} = req.body;
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+    if(username){
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername && existingUsername._id.toString() !== user._id.toString()) {
+            return res.status(400).json({ message: "Username already exists" });
+        }
+        user.username = username;
+    }
+    if(dateOfBirth){
+        user.dateOfBirth = dateOfBirth;
     }
     user.name = name || user.name;
     user.profile = profile || user.profile;
@@ -78,6 +88,7 @@ export const updateUserProfile = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export const getSupplierProfile = async (req, res) => {
   try {
