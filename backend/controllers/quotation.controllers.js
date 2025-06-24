@@ -51,7 +51,7 @@ export const getQuotation = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    res.status(200).json(quotation);
+    return res.status(200).json(quotation);
   } catch (error) {
     console.error("Error in getQuotation:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -66,20 +66,22 @@ export const getQuotations = async (req, res) => {
     // If supplier, get quotations for their products
     let quotations;
     if (req.user.role === "supplier") {
-      const supplierProducts = await Product.find({ supplier: userId }).select("_id");
-      const productIds = supplierProducts.map(p => p._id);
+      const supplierProducts = await Product.find({ supplier: userId }).select(
+        "_id"
+      );
+      const productIds = supplierProducts.map((p) => p._id);
 
       quotations = await Quotation.find({ product: { $in: productIds } })
-        .populate("consumer", "name")
-        .populate("product", "title");
+        .populate("consumer", "username")
+        .populate("product", "title price category");
     } else {
       // Else get quotations requested by the consumer
       quotations = await Quotation.find({ consumer: userId })
-        .populate("product", "title")
-        .populate("consumer", "name");
+        .populate("product", "title price category")
+        .populate("consumer", "username");
     }
 
-    res.status(200).json(quotations);
+    return res.status(200).json(quotations);
   } catch (error) {
     console.error("Error in getQuotations:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -90,7 +92,9 @@ export const getQuotations = async (req, res) => {
 export const updateQuotation = async (req, res) => {
   try {
     const { status, message } = req.body;
-    const quotation = await Quotation.findById(req.params.id).populate("product");
+    const quotation = await Quotation.findById(req.params.id).populate(
+      "product"
+    );
 
     if (!quotation) {
       return res.status(404).json({ message: "Quotation not found" });
@@ -118,7 +122,9 @@ export const updateQuotation = async (req, res) => {
 // Delete a quotation (supplier only)
 export const deleteQuotation = async (req, res) => {
   try {
-    const quotation = await Quotation.findById(req.params.id).populate("product");
+    const quotation = await Quotation.findById(req.params.id).populate(
+      "product"
+    );
 
     if (!quotation) {
       return res.status(404).json({ message: "Quotation not found" });
@@ -136,5 +142,3 @@ export const deleteQuotation = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-

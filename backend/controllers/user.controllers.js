@@ -21,7 +21,7 @@ export const getUserProfile = async (req, res) => {
 };
 
 export const updateUserProfile = async (req, res) => {
-  const { name, email , password,newPassword,profile,phone,username,dateOfBirth} = req.body;
+  const { name, email , currentPassword,newPassword,profile,phone,username,dateOfBirth} = req.body;
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -73,8 +73,8 @@ export const updateUserProfile = async (req, res) => {
         user.email = email;
     }
 
-    if (password && newPassword) {
-      const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (currentPassword && newPassword) {
+      const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isPasswordMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

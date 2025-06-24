@@ -1,17 +1,10 @@
-import {Product} from "../models/product.model.js";
+import { Product } from "../models/product.model.js";
 import cloudinary from "../config/cloudinary.js";
-
-
+import isSuspiciousProduct from "../utils/suspiciousProduct.js";
 
 export const getProducts = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 12,
-      category,
-      country,
-      search
-    } = req.query;
+    const { page = 1, limit = 12, category, country, search } = req.query;
 
     const query = {};
 
@@ -30,49 +23,50 @@ export const getProducts = async (req, res) => {
         .limit(parseInt(limit))
         .sort(sort)
         .populate("supplier", "name profile"),
-      Product.countDocuments(query)
+      Product.countDocuments(query),
     ]);
 
     res.status(200).json({
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
-      products
+      products,
     });
-
   } catch (error) {
     console.error("Homepage product fetch error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-export const getProductDetails = async(req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-        res.status(200).json(product);
-    } catch (error) {
-        console.log("error in get product details controller : ", error.message);
-        res.status(500).json({ message: "Internal Server Error" });
+export const getProductDetails = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
+    res.status(200).json(product);
+  } catch (error) {
+    console.log("error in get product details controller : ", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
-export const addProduct = async(req, res) => {
-    try {
-        const {title, description, price, category, country, media} = req.body;
-        if (!title || !description || !price || !category || !country || !media ) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        if (!req.user) {
-            return res.status(401).json({ message: "Unauthorized" });
-        }
-         if (media.length < 1) {
-            return res.status(400).json({ message: "At least one image is required" });
-        }
+export const addProduct = async (req, res) => {
+  try {
+    const { title, description, price, category, country, media } = req.body;
+    if (!title || !description || !price || !category || !country || !media) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (media.length < 1) {
+      return res
+        .status(400)
+        .json({ message: "At least one image is required" });
+    }
 
-       const uploadedMedia = await Promise.all(
+    const uploadedMedia = await Promise.all(
       req.files.map(async (file) => {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: "products",
@@ -87,28 +81,32 @@ export const addProduct = async(req, res) => {
       })
     );
 
-        if (media.length > 5) {
-            return res.status(400).json({ message: "Maximum of 5 images allowed" });
-        }
-  
-
-        const product = await Product.create({
-            supplier: req.user._id,
-            title,
-            description,
-            price,
-            category,
-            country,
-            media: uploadedMedia
-        });
-        res.status(201).json({
-            message: "Product added successfully",
-            product
-        });
-    } catch (error) {
-        console.log("error in add product controller : ", error.message);
-        res.status(500).json({ message: "Internal Server Error" });
+    if (media.length > 5) {
+      return res.status(400).json({ message: "Maximum of 5 images allowed" });
     }
+
+    const combinedMediaUrl = uploadedMedia.map((item) => item.url);
+    if (isSuspiciousProduct({ title, description, imageUrl: combinedMediaUrl })) {
+     res.status(400).json({ message: "Suspicious product detected , please read our terms and conditions before adding a product to the marketplace" });
+    }
+
+    const product = await Product.create({
+      supplier: req.user._id,
+      title,
+      description,
+      price,
+      category,
+      country,
+      media: uploadedMedia,
+    });
+    res.status(201).json({
+      message: "Product added successfully",
+      product,
+    });
+  } catch (error) {
+    console.log("error in add product controller : ", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 // Helper to extract public ID from Cloudinary URL
@@ -127,9 +125,9 @@ export const updateProduct = async (req, res) => {
   try {
     const { title, description, price, category, country } = req.body;
     console.log("BODY:", req.body);
-console.log("FILES:", req.files);
+    console.log("FILES:", req.files);
     const productId = req.params.id;
-    const media=req.files
+    const media = req.files;
 
     if (!productId) {
       return res.status(400).json({ message: "Product id is required" });
@@ -178,7 +176,7 @@ console.log("FILES:", req.files);
           };
         })
       );
-      console.log("Uploaded Media", uploadedMedia)
+      console.log("Uploaded Media", uploadedMedia);
       product.media = uploadedMedia;
     }
 
@@ -224,7 +222,9 @@ export const deleteProduct = async (req, res) => {
 
 export const getMyProducts = async (req, res) => {
   try {
-    const products = await Product.find({ supplier: req.user._id }).sort({ createdAt: -1 });
+    const products = await Product.find({ supplier: req.user._id }).sort({
+      createdAt: -1,
+    });
 
     res.status(200).json(products);
   } catch (error) {
@@ -232,7 +232,6 @@ export const getMyProducts = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 export const getMyProductDetails = async (req, res) => {
   try {
@@ -242,7 +241,9 @@ export const getMyProductDetails = async (req, res) => {
     });
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found or not authorized" });
+      return res
+        .status(404)
+        .json({ message: "Product not found or not authorized" });
     }
 
     res.status(200).json(product);
@@ -251,5 +252,3 @@ export const getMyProductDetails = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-
