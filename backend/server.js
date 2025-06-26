@@ -12,6 +12,7 @@ import { quotationRoutes } from './routes/quotation.routes.js';
 import { adRoutes } from './routes/ad.routes.js';
 import { subscribtionRoutes } from './routes/subscribtion.routes.js';
 import { adminRoutes } from './routes/admin.routes.js';
+import { otpRoutes } from './routes/otp.routes.js';
 
 // import the cron job to start it
 import {expireOldAdsJob} from "./utils/cronJobs/adExpired.js";
@@ -22,7 +23,7 @@ import { planExpiredJob } from './utils/cronJobs/planExpired.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
@@ -39,6 +40,7 @@ app.use("/api/v1/ads",adRoutes);
 app.use("/api/v1/subscription", subscribtionRoutes);
 app.use("/api/v1/quotation", quotationRoutes);
 app.use("/api/v1/admin",adminRoutes)
+app.use('/api/v1', otpRoutes);
 
 
 app.listen(PORT, () => {

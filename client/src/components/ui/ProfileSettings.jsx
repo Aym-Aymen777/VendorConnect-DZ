@@ -719,11 +719,13 @@ export default function ProfileSettings() {
                     No Store Yet
                   </h3>
                   <p className="text-[#1f3b73]/70 mb-6">
-                    Start selling by creating your own store
+                    Start selling by creating your own store  
                   </p>
+                  <Link to="/create-store" className="inline-block w-fit">
                   <button className="px-6 py-3 bg-[#e1a95f] text-[#1f3b73] font-medium rounded-xl hover:bg-[#e1a95f]/90 transition-colors">
                     Create Store
                   </button>
+                  </Link>
                 </div>
               </TabsContent>
 

@@ -26,9 +26,10 @@ const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const Cart = lazy(() => import("./components/product/Cart"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-
+const CreateStore = lazy(() => import("./pages/CreateStore"));
 
 function App() {
+ 
   return (
     <>
       <Suspense
@@ -60,6 +61,7 @@ function App() {
           <Route path="/blogs/:id" element={<BlogDetails />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/sub-admin" element={<SubAdminDashboard />} />
+          <Route path="/create-store" element={<CreateStore/>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

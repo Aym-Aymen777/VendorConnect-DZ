@@ -57,6 +57,18 @@ const userSchema = new mongoose.Schema(
         ref: "Notification",
       },
     ],
+    cart: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
     supplierProfile: {
       companyName: { type: String },
       businessType: { type: String, enum: ["store", "workshop", "supplier"] },

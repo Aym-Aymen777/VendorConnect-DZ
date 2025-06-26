@@ -396,7 +396,7 @@ const Header = () => {
               <div className="p-2 cursor-pointer flex items-center justify-center gap-2 text-[#1f3b73] transition-colors duration-200 relative group">
                 <Coins className="h-6 w-6 text-[#1f3b73]" />
                 <span className="text-[#1f3b73]">
-                  400
+                  {user.coinsBalance}
                 </span>
               </div>
               {/* Wishlist */}

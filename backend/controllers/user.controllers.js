@@ -108,51 +108,92 @@ export const getSupplierProfile = async (req, res) => {
 
 export const submitDocsAndBecomeSupplier = async (req, res) => {
   try {
-   const {supplierProfile}= req.body;
+    const { supplierProfile } = req.body;
+
+    if (!supplierProfile || !supplierProfile.documents) {
+      return res.status(400).json({ message: "Missing supplier profile or documents" });
+    }
+
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-   if (
-  supplierProfile &&
-  supplierProfile.documents &&
-  supplierProfile.documents.length > 0
-) {
-  const uploadedDocs = {};
 
-  for (let doc of supplierProfile.documents) {
-    const result = await cloudinary.uploader.upload(doc,  {
-          upload_preset: envVars.uploadPreset, 
-          transformation: [
-            { fetch_format: "auto", quality: "auto" },
-          ],
-        });
-    // Assign URL based on the field name or order
-    if (!uploadedDocs.identityDocumentUrl) {
+    const uploadedDocs = {};
+
+    // رفع وثيقة الهوية
+    if (supplierProfile.documents.identityDocumentUrl) {
+      const result = await cloudinary.uploader.upload(
+        supplierProfile.documents.identityDocumentUrl,
+        {
+          upload_preset: envVars.uploadPreset,
+          transformation: [{ fetch_format: "auto", quality: "auto" }],
+        }
+      );
       uploadedDocs.identityDocumentUrl = result.secure_url;
-    } else if (!uploadedDocs.businessLicenseUrl) {
+    }
+
+    // رفع رخصة النشاط
+    if (supplierProfile.documents.businessLicenseUrl) {
+      const result = await cloudinary.uploader.upload(
+        supplierProfile.documents.businessLicenseUrl,
+        {
+          upload_preset: envVars.uploadPreset,
+          transformation: [{ fetch_format: "auto", quality: "auto" }],
+        }
+      );
       uploadedDocs.businessLicenseUrl = result.secure_url;
-    } else if (!uploadedDocs.resumeOrPortfolioUrl) {
+    }
+
+    // رفع السيرة الذاتية أو البورتفوليو
+    if (supplierProfile.documents.resumeOrPortfolioUrl) {
+      const result = await cloudinary.uploader.upload(
+        supplierProfile.documents.resumeOrPortfolioUrl,
+        {
+          upload_preset: envVars.uploadPreset,
+          transformation: [{ fetch_format: "auto", quality: "auto" }],
+        }
+      );
       uploadedDocs.resumeOrPortfolioUrl = result.secure_url;
     }
-  }
 
-  supplierProfile.documents = uploadedDocs;
-}
+    // التحقق من رفع كل الملفات
+    if (
+      !uploadedDocs.identityDocumentUrl ||
+      !uploadedDocs.businessLicenseUrl ||
+      !uploadedDocs.resumeOrPortfolioUrl
+    ) {
+      return res.status(400).json({ message: "All required documents must be uploaded" });
+    }
 
-/* if (!uploadedDocs){
-  return res.status(400).json({ message: "Please upload all required documents" }); // TODO recomment this in UI
-} */
-
-    user.supplierProfile = supplierProfile;
+    // تحديث المستخدم
+    user.supplierProfile =  {
+      ...supplierProfile,
+      documents: uploadedDocs,
+      status: "pending",
+      socialLinks: supplierProfile.socialLinks || {
+        facebook: "",
+        instagram: "",
+        linkedin: "",
+        whatsapp: "",
+        tiktok: "",
+      },
+      subscription: supplierProfile.subscription || {
+        plan: "basic",
+        isSubscribed: false,
+        expiryDate: null,
+      },
+    };
     await user.save();
-    const newSupplierRequest = new SupplierRequest({
-      user: user,
-    })
+
+    // إنشاء طلب مورد جديد
+    const newSupplierRequest = new SupplierRequest({ user: user._id });
+    await newSupplierRequest.save();
+
     return res.status(200).json({ message: "Documents submitted successfully" });
 
   } catch (error) {
     console.error("Error submitting user documents controller:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
