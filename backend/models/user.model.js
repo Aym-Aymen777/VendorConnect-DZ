@@ -28,20 +28,31 @@ const userSchema = new mongoose.Schema(
     isBlocked: { type: Boolean, default: false },
     socialLogin: { type: Boolean, default: false },
     languagePreference: { type: String, default: "en" },
-    country: { type: String, default: "US" },
+    country: { type: String, default: "DZ" },
     subscriptions: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
     ],
     profile: {
       avatar: { type: String },
       bio: { type: String },
-      socialLinks: [{ type: String }],
+      socialLinks: [
+        {
+          platform: String,
+          url: String,
+        },
+      ],
       address: { type: String },
       location: { lat: { type: Number }, lng: { type: Number } },
       products: [
         {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
+        },
+      ],
+      blogs: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Blog",
         },
       ],
     },
@@ -96,6 +107,7 @@ const userSchema = new mongoose.Schema(
         businessLicenseUrl: String,
         resumeOrPortfolioUrl: String,
       },
+      isFeatured: { type: Boolean, default: false },
       subscription: {
         plan: { type: String, default: "basic" },
         isSubscribed: Boolean,

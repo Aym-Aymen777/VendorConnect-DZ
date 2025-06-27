@@ -28,6 +28,10 @@ import {
   Check,
   X,
   Loader2,
+  Globe,
+  ChevronDown,
+  MapPin,
+  Share2,
 } from "lucide-react";
 import Header from "../common/Header";
 import { useTranslation } from "react-i18next";
@@ -35,6 +39,8 @@ import { useAuthCheck } from "../../hooks/useAuthCheck";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/formatDate.js";
 import useUserStore from "../../store/UserStore.js";
+import { countries } from "../../utils/countries.js";
+import UpdateCompanyInfos from "./UpdateCompanyInfos.jsx";
 
 export default function ProfileSettings() {
   const { tab: urlTab } = useParams(); // Get tab from URL params
@@ -52,17 +58,67 @@ export default function ProfileSettings() {
     email: "",
     phone: "",
     dateOfBirth: "",
+    address: "",
+    country: "",
+    socialLinks: {
+      instagram: "",
+      tiktok: "",
+      facebook: "",
+      twitter: "",
+      youtube: "",
+    },
     bio: "",
   });
 
   // When `user` becomes available, seed the form
   useEffect(() => {
     if (user) {
+      // Convert array of social links to object format for easier handling
+      const socialLinksObj = {
+        instagram: user.profile?.socialLinks
+          ? user.profile.socialLinks.find(
+              (link) => link.platform === "instagram"
+            )?.url
+          : "",
+        tiktok: user.profile?.socialLinks
+          ? user.profile.socialLinks.find((link) => link.platform === "tiktok")
+              ?.url
+          : "",
+        facebook: user.profile?.socialLinks
+          ? user.profile.socialLinks.find(
+              (link) => link.platform === "facebook"
+            )?.url
+          : "",
+        twitter: user.profile?.socialLinks
+          ? user.profile.socialLinks.find((link) => link.platform === "twitter")
+              ?.url
+          : "",
+        youtube: user.profile?.socialLinks
+          ? user.profile.socialLinks.find((link) => link.platform === "youtube")
+              ?.url
+          : "",
+      };
+
+      // If user has socialLinks array, convert it to object format
+      if (
+        user.profile?.socialLinks &&
+        Array.isArray(user.profile.socialLinks)
+      ) {
+        user.profile.socialLinks.forEach((link) => {
+          if (link.platform && link.url) {
+            socialLinksObj[link.platform.toLowerCase()] = link.url;
+          }
+        });
+      }
+
       setAccountInfos({
         name: user.name ?? "",
         email: user.email ?? "",
         phone: user.phone ?? "",
         dateOfBirth: user.dateOfBirth ?? "",
+        address: user.profile?.address ?? "",
+        country: user.country ?? "",
+        socialLinks: socialLinksObj ?? {},
         bio: user.profile?.bio ?? "",
       });
     }
@@ -150,6 +206,14 @@ export default function ProfileSettings() {
         t("validation.bioMaxLength") || "Bio must be less than 500 characters";
     }
 
+    // Social links validation (optional but must be valid URLs if provided)
+    const urlRegex = /^https?:\/\/.+/;
+    Object.entries(accountInfos.socialLinks).forEach(([platform, url]) => {
+      if (url && !urlRegex.test(url)) {
+        newErrors[platform] = `Please enter a valid ${platform} URL`;
+      }
+    });
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -170,6 +234,29 @@ export default function ProfileSettings() {
         [name]: "",
       }));
     }
+
+    setHasChanges(true);
+  };
+
+  // Handle social link changes
+  const handleSocialLinkChange = (platform, value) => {
+    setAccountInfos((prev) => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        [platform]: value,
+      },
+    }));
+
+    // Clear specific field error when user starts typing
+    if (errors[platform]) {
+      setErrors((prev) => ({
+        ...prev,
+        [platform]: "",
+      }));
+    }
+
+    setHasChanges(true);
   };
 
   // Handle form submission
@@ -184,15 +271,26 @@ export default function ProfileSettings() {
     setIsLoading(true);
 
     try {
+      // Convert socialLinks object back to array format for storage
+      const socialLinksArray = Object.entries(accountInfos.socialLinks)
+        .filter(([platform, url]) => url.trim() !== "")
+        .map(([platform, url]) => ({
+          platform: platform.charAt(0).toUpperCase() + platform.slice(1),
+          url: url.trim(),
+        }));
+
       // Prepare data for update
       const updateData = {
         name: accountInfos.name.trim(),
         email: accountInfos.email.trim(),
         phone: accountInfos.phone.trim(),
         dateOfBirth: accountInfos.dateOfBirth,
+        country: accountInfos.country.trim(),
         profile: {
           ...user.profile,
           bio: accountInfos.bio.trim(),
+          address: accountInfos.address.trim(),
+          socialLinks: socialLinksArray,
         },
       };
 
@@ -229,12 +327,36 @@ export default function ProfileSettings() {
   // Handle form reset
   const handleResetForm = () => {
     if (user) {
+      // Convert array of social links to object format for easier handling
+      const socialLinksObj = {
+        instagram: "",
+        tiktok: "",
+        facebook: "",
+        twitter: "",
+        youtube: "",
+      };
+
+      // If user has socialLinks array, convert it to object format
+      if (
+        user.profile?.socialLinks &&
+        Array.isArray(user.profile.socialLinks)
+      ) {
+        user.profile.socialLinks.forEach((link) => {
+          if (link.platform && link.url) {
+            socialLinksObj[link.platform.toLowerCase()] = link.url;
+          }
+        });
+      }
+
       setAccountInfos({
         name: user.name || "",
         email: user.email || "",
         phone: user.phone || "",
         dateOfBirth: user.dateOfBirth || "",
         bio: user.profile?.bio || "",
+        address: user.profile?.address || "",
+        country: user.country || "",
+        socialLinks: socialLinksObj,
       });
       setErrors({});
       setHasChanges(false);
@@ -519,14 +641,296 @@ export default function ProfileSettings() {
                         </p>
                       )}
                     </div>
+
+                    {/* Country Field */}
+                    <div>
+                      <label
+                        htmlFor="country"
+                        className="block text-sm font-medium text-[#1f3b73] mb-2">
+                        {"Country"}
+                      </label>
+                      <div className="relative">
+                        <Globe
+                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#1f3b73]/50"
+                          size={18}
+                        />
+                        <select
+                          id="country"
+                          name="country"
+                          value={accountInfos.country}
+                          onChange={handleChangeAccountInfos}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent appearance-none bg-white ${
+                            errors.country
+                              ? "border-red-500"
+                              : "border-[#1f3b73]/20"
+                          }`}>
+                          {countries.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#1f3b73]/50 pointer-events-none"
+                          size={18}
+                        />
+                      </div>
+                      {errors.country && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.country}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Address Field */}
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium text-[#1f3b73] mb-2">
+                        {"Address"}
+                      </label>
+                      <div className="relative">
+                        <MapPin
+                          className="absolute left-3 top-3 text-[#1f3b73]/50"
+                          size={18}
+                        />
+                        <input
+                          id="address"
+                          type="text"
+                          name="address"
+                          value={accountInfos.address}
+                          onChange={handleChangeAccountInfos}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent ${
+                            errors.address
+                              ? "border-red-500"
+                              : "border-[#1f3b73]/20"
+                          }`}
+                          placeholder={"Enter your address"}
+                        />
+                      </div>
+                      {errors.address && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.address}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Social Media Links Section */}
+                  <div className="border-t border-[#1f3b73]/10 pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Share2 className="text-[#1f3b73]" size={20} />
+                      <h3 className="text-xl font-semibold text-[#1f3b73]">
+                        {"Social Media Links"}
+                      </h3>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Instagram */}
+                      <div>
+                        <label
+                          htmlFor="instagram"
+                          className="block text-sm font-medium text-[#1f3b73] mb-2">
+                          Instagram
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <svg
+                              className="w-5 h-5 text-pink-500"
+                              viewBox="0 0 24 24"
+                              fill="currentColor">
+                              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                          </div>
+                          <input
+                            id="instagram"
+                            type="url"
+                            name="instagram"
+                            value={accountInfos.socialLinks.instagram}
+                            onChange={(e) =>
+                              handleSocialLinkChange(
+                                "instagram",
+                                e.target.value
+                              )
+                            }
+                            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent ${
+                              errors.instagram
+                                ? "border-red-500"
+                                : "border-[#1f3b73]/20"
+                            }`}
+                            placeholder="https://instagram.com/username"
+                          />
+                        </div>
+                        {errors.instagram && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.instagram}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* TikTok */}
+                      <div>
+                        <label
+                          htmlFor="tiktok"
+                          className="block text-sm font-medium text-[#1f3b73] mb-2">
+                          TikTok
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <svg
+                              className="w-5 h-5 text-black"
+                              viewBox="0 0 24 24"
+                              fill="currentColor">
+                              <path d="M19.589 6.686a4.793 4.793 0 01-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 01-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 013.183-4.51v-3.5a6.329 6.329 0 00-5.394 10.692 6.33 6.33 0 1010.857-4.424V8.687a8.182 8.182 0 004.773 1.526V6.79a4.831 4.831 0 01-1.003-.104z" />
+                            </svg>
+                          </div>
+                          <input
+                            id="tiktok"
+                            type="url"
+                            name="tiktok"
+                            value={accountInfos.socialLinks.tiktok}
+                            onChange={(e) =>
+                              handleSocialLinkChange("tiktok", e.target.value)
+                            }
+                            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent ${
+                              errors.tiktok
+                                ? "border-red-500"
+                                : "border-[#1f3b73]/20"
+                            }`}
+                            placeholder="https://tiktok.com/@username"
+                          />
+                        </div>
+                        {errors.tiktok && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.tiktok}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Facebook */}
+                      <div>
+                        <label
+                          htmlFor="facebook"
+                          className="block text-sm font-medium text-[#1f3b73] mb-2">
+                          Facebook
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <svg
+                              className="w-5 h-5 text-blue-600"
+                              viewBox="0 0 24 24"
+                              fill="currentColor">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                          </div>
+                          <input
+                            id="facebook"
+                            type="url"
+                            name="facebook"
+                            value={accountInfos.socialLinks.facebook}
+                            onChange={(e) =>
+                              handleSocialLinkChange("facebook", e.target.value)
+                            }
+                            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent ${
+                              errors.facebook
+                                ? "border-red-500"
+                                : "border-[#1f3b73]/20"
+                            }`}
+                            placeholder="https://facebook.com/username"
+                          />
+                        </div>
+                        {errors.facebook && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.facebook}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* X (Twitter) */}
+                      <div>
+                        <label
+                          htmlFor="twitter"
+                          className="block text-sm font-medium text-[#1f3b73] mb-2">
+                          X (Twitter)
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <svg
+                              className="w-5 h-5 text-black"
+                              viewBox="0 0 24 24"
+                              fill="currentColor">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                          </div>
+                          <input
+                            id="twitter"
+                            type="url"
+                            name="twitter"
+                            value={accountInfos.socialLinks.twitter}
+                            onChange={(e) =>
+                              handleSocialLinkChange("twitter", e.target.value)
+                            }
+                            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent ${
+                              errors.twitter
+                                ? "border-red-500"
+                                : "border-[#1f3b73]/20"
+                            }`}
+                            placeholder="https://x.com/username"
+                          />
+                        </div>
+                        {errors.twitter && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.twitter}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* YouTube */}
+                      <div className="md:col-span-2">
+                        <label
+                          htmlFor="youtube"
+                          className="block text-sm font-medium text-[#1f3b73] mb-2">
+                          YouTube
+                        </label>
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <svg
+                              className="w-5 h-5 text-red-600"
+                              viewBox="0 0 24 24"
+                              fill="currentColor">
+                              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                            </svg>
+                          </div>
+                          <input
+                            id="youtube"
+                            type="url"
+                            name="youtube"
+                            value={accountInfos.socialLinks.youtube}
+                            onChange={(e) =>
+                              handleSocialLinkChange("youtube", e.target.value)
+                            }
+                            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a95f] focus:border-transparent ${
+                              errors.youtube
+                                ? "border-red-500"
+                                : "border-[#1f3b73]/20"
+                            }`}
+                            placeholder="https://youtube.com/@username"
+                          />
+                        </div>
+                        {errors.youtube && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.youtube}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Bio Field */}
-                  <div>
+                  <div className="border-t border-[#1f3b73]/10 pt-6">
                     <label
                       htmlFor="bio"
                       className="block text-sm font-medium text-[#1f3b73] mb-2">
-                      {t("account.bio") || "Bio"}
+                      {"Bio"}
                     </label>
                     <textarea
                       id="bio"
@@ -558,7 +962,7 @@ export default function ProfileSettings() {
                   <div className="flex items-center gap-4 pt-4">
                     <button
                       type="submit"
-                      disabled={hasChanges || isLoading}
+                      disabled={!hasChanges || isLoading}
                       className="px-6 py-3 bg-[#1f3b73] text-white rounded-xl hover:bg-[#1f3b73]/90 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                       {isLoading ? (
                         <Loader2 size={18} className="animate-spin" />
@@ -576,7 +980,7 @@ export default function ProfileSettings() {
                         onClick={handleResetForm}
                         disabled={isLoading}
                         className="px-6 py-3 border-2 border-[#1f3b73]/20 text-[#1f3b73] rounded-xl hover:bg-[#1f3b73]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        {t("account.cancel") || "Cancel"}
+                        {"Cancel"}
                       </button>
                     )}
                   </div>
@@ -713,20 +1117,26 @@ export default function ProfileSettings() {
                     My Store
                   </h2>
                 </div>
-                <div className="text-center py-12">
-                  <Store className="mx-auto text-[#1f3b73]/30 mb-4" size={64} />
-                  <h3 className="text-xl font-semibold text-[#1f3b73] mb-2">
-                    No Store Yet
-                  </h3>
-                  <p className="text-[#1f3b73]/70 mb-6">
-                    Start selling by creating your own store  
-                  </p>
-                  <Link to="/create-store" className="inline-block w-fit">
-                  <button className="px-6 py-3 bg-[#e1a95f] text-[#1f3b73] font-medium rounded-xl hover:bg-[#e1a95f]/90 transition-colors">
-                    Create Store
-                  </button>
-                  </Link>
-                </div>
+                {user?.role === "supplier" && <UpdateCompanyInfos/>}
+                {user?.role === "consumer" && (
+                  <div className="text-center py-12">
+                    <Store
+                      className="mx-auto text-[#1f3b73]/30 mb-4"
+                      size={64}
+                    />
+                    <h3 className="text-xl font-semibold text-[#1f3b73] mb-2">
+                      No Store Yet
+                    </h3>
+                    <p className="text-[#1f3b73]/70 mb-6">
+                      Start selling by creating your own store
+                    </p>
+                    <Link to="/create-store" className="inline-block w-fit">
+                      <button className="px-6 py-3 bg-[#e1a95f] text-[#1f3b73] font-medium rounded-xl hover:bg-[#e1a95f]/90 transition-colors">
+                        Create Store
+                      </button>
+                    </Link>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="billing" className="p-8 m-0">
