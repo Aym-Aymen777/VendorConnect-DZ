@@ -24,13 +24,6 @@ import {
   Facebook,
 } from "lucide-react";
 
-import {
-  FaYoutube,
-  FaInstagram,
-  FaTwitter,
-  FaLinkedin,
-  FaFacebook,
-} from "react-icons/fa";
 
 import Header from "../components/common/Header";
 import { Link } from "react-router-dom";
@@ -38,6 +31,7 @@ import CombinedChartsBox from "../components/dashboard/supplier/AnalyticsCharts"
 import { useAuthCheck } from "../hooks/useAuthCheck";
 import useUserStore from "../store/UserStore";
 import { formatDate } from "../utils/formatDate";
+import { ProductMediaSlider } from "../components/ui/ProductMediaSlider";
 import { toast } from "sonner";
 
 // Sample data for supplier
@@ -48,24 +42,6 @@ const supplierStats = {
   activeOrders: 12,
 };
 
-const supplierProducts = [
-  {
-    id: 1,
-    name: "Modern Sofa Collection",
-    price: "$499-899",
-    image: "/products/sofa.jpg",
-    sales: 45,
-    views: 320,
-  },
-  {
-    id: 2,
-    name: "Wooden Coffee Tables",
-    price: "$199-399",
-    image: "/products/coffee-table.jpg",
-    sales: 28,
-    views: 180,
-  },
-];
 
 const favorites = [
   { name: "Modern Sofa", price: "$499", image: "/products/sofa.jpg" },
@@ -83,7 +59,7 @@ export default function Profile() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [wishlist, setWishlist] = useState([]);
-  const [loading, setLoading] = useState(false);
+ // const [loading, setLoading] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
 
@@ -235,7 +211,7 @@ export default function Profile() {
             <Package className="text-[#e1a95f]" size={24} />
             <div>
               <div className="text-lg lg:text-2xl font-bold text-[#1f3b73]">
-                {supplierStats.totalProducts}
+                {user.profile.products.length}
               </div>
               <div className="text-xs lg:text-sm text-gray-500">Products</div>
             </div>
@@ -289,7 +265,7 @@ export default function Profile() {
         </h4>
         <div className="flex flex-wrap gap-3">
           <Link
-            to="/add-product"
+            to="/product/add"
             className="inline-flex items-center gap-2 bg-[#e1a95f] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#d89a4b] transition-colors">
             <Plus size={18} /> Add Product
           </Link>
@@ -379,27 +355,23 @@ export default function Profile() {
           My Products
         </h3>
         <Link
-          to="/add-product"
+          to="/product/add"
           className="inline-flex items-center gap-2 bg-[#e1a95f] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#d89a4b] transition-colors">
           <Plus size={18} /> Add New Product
         </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-        {supplierProducts.map((product) => (
+        {products.map((product) => (
           <div
-            key={product.id}
+            key={product._id}
             className="bg-white rounded-xl shadow p-4 lg:p-6">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-32 lg:h-40 object-cover rounded-lg mb-4"
-            />
+             <ProductMediaSlider media={product.media} title={product.title} />
             <h4 className="font-semibold text-[#1f3b73] mb-2">
-              {product.name}
+              {product.title}
             </h4>
             <p className="text-[#e1a95f] font-bold text-lg mb-3">
-              {product.price}
+              {product.price} DZD
             </p>
 
             <div className="flex justify-between text-sm text-gray-600 mb-4">
@@ -414,12 +386,18 @@ export default function Profile() {
             </div>
 
             <div className="flex gap-2">
-              <button className="flex-1 px-3 py-2 bg-[#1f3b73] text-white rounded-lg text-sm font-medium hover:bg-[#16305a] transition">
+              <Link to={`/product/update/${product._id}`} >
+              <button  className="flex-1 px-3 py-2 bg-[#1f3b73] text-white rounded-lg text-sm font-medium hover:bg-[#16305a] transition">
                 Edit
               </button>
-              <button className="flex-1 px-3 py-2 bg-[#e1a95f] text-white rounded-lg text-sm font-medium hover:bg-[#d89a4b] transition">
+              </Link>
+
+              <Link to={`/product/${product._id}`} >
+              <button  className="flex-1 px-3 py-2 bg-[#e1a95f] text-white rounded-lg text-sm font-medium hover:bg-[#d89a4b] transition">
                 View
               </button>
+              </Link>
+              
             </div>
           </div>
         ))}

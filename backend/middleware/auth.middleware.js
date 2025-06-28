@@ -5,27 +5,37 @@ import { envVars } from "../utils/envVars.js";
 export const ProtectRoute = async (req, res, next) => {
   try {
     const token = req.cookies["jwt-Deadecor"];
+
     if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized - No Token Provided" });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - No Token Provided",
+      });
     }
+
     const decoded = jwt.verify(token, envVars.jwtSecret);
-    if (!decoded) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized - Invalid Token" });
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized - Invalid Token Payload",
+      });
     }
-    const user = await User.findById(decoded.userId).select("-password");
+
+    const user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
+
     req.user = user;
     next();
   } catch (error) {
-    console.log("error in protectrout function : ", error.message);
-    res.status(500).json({ success: false, message: "Internal Server error" });
+    console.error("Error in ProtectRoute middleware:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

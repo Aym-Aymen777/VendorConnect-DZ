@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema(
     ],
     supplierProfile: {
       companyName: { type: String },
-      businessType: { type: String, enum: ["store", "workshop", "supplier"] },
+      businessType: { type: String, enum: ["store", "workshop","company"] },
       industry: String,
       description: String,
       address: String,

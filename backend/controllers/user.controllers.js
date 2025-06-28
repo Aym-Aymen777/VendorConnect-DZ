@@ -1,10 +1,11 @@
 import bcrypt from "bcryptjs";
+import multer from "multer";
 import { User } from "../models/user.model.js";
 import { SupplierRequest } from "../models/request.model.js";
 import cloudinary from "../config/cloudinary.js";
 import { envVars } from "../utils/envVars.js";
-import {deleteFromCloudinary} from "../utils/deleteFromCloudinary.js"
-import {uploadToCloudinary} from "../utils/uploadToCloudinary.js"
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const getUserProfile = async (req, res) => {
   try {
@@ -140,13 +141,36 @@ export const updateUserStore = async (req, res) => {
       country,
       phone,
       website,
-      socialLinks,
       locationMap,
     } = req.body;
-
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    let socialLinks = {};
+    if (req.body.socialLinks) {
+      try {
+        socialLinks = JSON.parse(req.body.socialLinks);
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid social links format" });
+      }
+
+      if (socialLinks.facebook)
+        user.supplierProfile.socialLinks.facebook = socialLinks.facebook;
+      if (socialLinks.instagram)
+        user.supplierProfile.socialLinks.instagram = socialLinks.instagram;
+      if (socialLinks.linkedin)
+        user.supplierProfile.socialLinks.linkedin = socialLinks.linkedin;
+      if (socialLinks.whatsapp)
+        user.supplierProfile.socialLinks.whatsapp = socialLinks.whatsapp;
+      if (socialLinks.tiktok)
+        user.supplierProfile.socialLinks.tiktok = socialLinks.tiktok;
+    }
+
+    // Initialize supplier profile if it doesn't exist
+    if (!user.supplierProfile) {
+      user.supplierProfile = {};
     }
 
     // Handle file uploads
@@ -158,66 +182,76 @@ export const updateUserStore = async (req, res) => {
     // Handle logo upload
     if (req.files?.logo) {
       try {
-        // Delete old logo if exists
         if (logoUrl) {
           await deleteFromCloudinary(logoUrl);
         }
-        logoUrl = await uploadToCloudinary(req.files.logo[0], 'company_assets/logos');
+        logoUrl = await uploadToCloudinary(
+          req.files.logo[0],
+          "company_assets/logos"
+        );
       } catch (error) {
-        console.error('Logo upload error:', error);
-        return res.status(400).json({ message: 'Failed to upload logo' });
+        console.error("Logo upload error:", error);
+        return res.status(400).json({ message: "Failed to upload logo" });
       }
     }
 
     // Handle cover image upload
     if (req.files?.coverImage) {
       try {
-        // Delete old cover image if exists
         if (coverImageUrl) {
           await deleteFromCloudinary(coverImageUrl);
         }
-        coverImageUrl = await uploadToCloudinary(req.files.coverImage[0], 'company_assets/covers');
+        coverImageUrl = await uploadToCloudinary(
+          req.files.coverImage[0],
+          "company_assets/covers"
+        );
       } catch (error) {
-        console.error('Cover image upload error:', error);
-        return res.status(400).json({ message: 'Failed to upload cover image' });
+        console.error("Cover image upload error:", error);
+        return res
+          .status(400)
+          .json({ message: "Failed to upload cover image" });
       }
     }
 
     // Handle profile video upload
     if (req.files?.profileVideo) {
       try {
-        // Delete old profile video if exists
         if (profileVideoUrl) {
           await deleteFromCloudinary(profileVideoUrl);
         }
-        profileVideoUrl = await uploadToCloudinary(req.files.profileVideo[0], 'company_assets/videos');
+        profileVideoUrl = await uploadToCloudinary(
+          req.files.profileVideo[0],
+          "company_assets/videos"
+        );
       } catch (error) {
-        console.error('Profile video upload error:', error);
-        return res.status(400).json({ message: 'Failed to upload profile video' });
+        console.error("Profile video upload error:", error);
+        return res
+          .status(400)
+          .json({ message: "Failed to upload profile video" });
       }
     }
 
     // Handle gallery uploads
-    if (req.files?.gallery) {
+    if (req.files?.gallery && req.files.gallery.length > 0) {
       try {
         const galleryUploads = [];
-        
+
         // Upload new gallery images
         for (const file of req.files.gallery) {
-          const imageUrl = await uploadToCloudinary(file, 'company_assets/gallery');
+          const imageUrl = await uploadToCloudinary(
+            file,
+            "company_assets/gallery"
+          );
           galleryUploads.push(imageUrl);
         }
-        
-        // Add new images to existing gallery (or replace based on your logic)
-        // Option 1: Add to existing gallery
+
+        // Add new images to existing gallery
         gallery = [...gallery, ...galleryUploads];
-        
-        // Option 2: Replace entire gallery (uncomment if you want this behavior)
-        // gallery = galleryUploads;
-        
       } catch (error) {
-        console.error('Gallery upload error:', error);
-        return res.status(400).json({ message: 'Failed to upload gallery images' });
+        console.error("Gallery upload error:", error);
+        return res
+          .status(400)
+          .json({ message: "Failed to upload gallery images" });
       }
     }
 
@@ -225,41 +259,45 @@ export const updateUserStore = async (req, res) => {
     if (req.body.removeGalleryImages) {
       try {
         const imagesToRemove = JSON.parse(req.body.removeGalleryImages);
-        
+
         // Delete from Cloudinary
         for (const imageUrl of imagesToRemove) {
           await deleteFromCloudinary(imageUrl);
         }
-        
+
         // Remove from gallery array
-        gallery = gallery.filter(img => !imagesToRemove.includes(img));
+        gallery = gallery.filter((img) => !imagesToRemove.includes(img));
+        console.log("Gallery images removed successfully");
       } catch (error) {
-        console.error('Gallery deletion error:', error);
-        return res.status(400).json({ message: 'Failed to remove gallery images' });
+        console.error("Gallery deletion error:", error);
+        return res
+          .status(400)
+          .json({ message: "Failed to remove gallery images" });
       }
     }
 
-    // Update user profile
-    user.supplierProfile.companyName = companyName || user.supplierProfile.companyName;
-    user.supplierProfile.businessType = businessType || user.supplierProfile.businessType;
-    user.supplierProfile.industry = industry || user.supplierProfile.industry;
-    user.supplierProfile.description = description || user.supplierProfile.description;
-    user.supplierProfile.address = address || user.supplierProfile.address;
-    user.supplierProfile.city = city || user.supplierProfile.city;
-    user.supplierProfile.country = country || user.supplierProfile.country;
-    user.supplierProfile.phone = phone || user.supplierProfile.phone;
-    user.supplierProfile.website = website || user.supplierProfile.website;
+    if (companyName) user.supplierProfile.companyName = companyName;
+    if (businessType && businessType !== "")
+      user.supplierProfile.businessType = businessType;
+    if (industry) user.supplierProfile.industry = industry;
+    if (description) user.supplierProfile.description = description;
+    if (address) user.supplierProfile.address = address;
+    if (city) user.supplierProfile.city = city;
+    if (country) user.supplierProfile.country = country;
+    if (phone) user.supplierProfile.phone = phone;
+    if (website) user.supplierProfile.website = website;
+    if (locationMap) user.supplierProfile.locationMap = locationMap;
+    // Always update these as they might be new uploads or existing URLs
     user.supplierProfile.logoUrl = logoUrl;
     user.supplierProfile.coverImageUrl = coverImageUrl;
-    user.supplierProfile.socialLinks = socialLinks || user.supplierProfile.socialLinks;
-    user.supplierProfile.gallery = gallery;
     user.supplierProfile.profileVideoUrl = profileVideoUrl;
-    user.supplierProfile.locationMap = locationMap || user.supplierProfile.locationMap;
+    user.supplierProfile.gallery = gallery;
+    user.supplierProfile.socialLinks = socialLinks;
 
+    // Save the user
     await user.save();
-
-    return res.status(200).json({ 
-      message: "Store updated successfully", 
+    return res.status(200).json({
+      message: "Store updated successfully",
       user: {
         ...user.toObject(),
         supplierProfile: {
@@ -267,16 +305,30 @@ export const updateUserStore = async (req, res) => {
           logoUrl,
           coverImageUrl,
           profileVideoUrl,
-          gallery
-        }
-      }
+          gallery,
+        },
+      },
     });
-
   } catch (error) {
     console.error("Error updating user store controller:", error);
-    return res.status(500).json({ 
+
+    // Handle multer errors specifically
+    if (error instanceof multer.MulterError) {
+      if (error.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          message: "File too large. Maximum size is 10MB per file.",
+        });
+      }
+      if (error.code === "LIMIT_FILE_COUNT") {
+        return res.status(400).json({
+          message: "Too many files. Maximum 15 files allowed.",
+        });
+      }
+    }
+
+    return res.status(500).json({
       message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -284,7 +336,7 @@ export const updateUserStore = async (req, res) => {
 export const deleteGalleryImage = async (req, res) => {
   try {
     const { imageUrl } = req.body;
-    
+
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -295,16 +347,15 @@ export const deleteGalleryImage = async (req, res) => {
 
     // Remove from gallery array
     user.supplierProfile.gallery = user.supplierProfile.gallery.filter(
-      img => img !== imageUrl
+      (img) => img !== imageUrl
     );
 
     await user.save();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "Gallery image deleted successfully",
-      gallery: user.supplierProfile.gallery
+      gallery: user.supplierProfile.gallery,
     });
-
   } catch (error) {
     console.error("Error deleting gallery image:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -328,11 +379,10 @@ export const clearGallery = async (req, res) => {
     user.supplierProfile.gallery = [];
     await user.save();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "Gallery cleared successfully",
-      gallery: []
+      gallery: [],
     });
-
   } catch (error) {
     console.error("Error clearing gallery:", error);
     return res.status(500).json({ message: "Internal server error" });

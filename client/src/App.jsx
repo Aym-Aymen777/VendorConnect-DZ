@@ -7,6 +7,9 @@ import Footer from "./components/common/Footer";
 import SubAdminDashboard from "./pages/SubAdmin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import AddProduct from "./pages/AddProduct";
+import { useAuthCheck } from "./hooks/useAuthCheck";
+import EditProduct from "./pages/EditProduct";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
@@ -29,6 +32,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const CreateStore = lazy(() => import("./pages/CreateStore"));
 
 function App() {
+  const { user } = useAuthCheck();
  
   return (
     <>
@@ -45,23 +49,25 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/account/:tab" element={<ProfileSettings />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/products" element={<Marketplace />} />
-          <Route path="/products/:tab" element={<Marketplace />} />
-          <Route path="/products/:tab/:subtab" element={<Marketplace />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/suppliers" element={<Suppliers />} />
-          <Route path="/suppliers/:id" element={<SupplierDetails />} />
-          <Route path="/messages" element={<Chats />} />
-          <Route path="/messages/:id" element={<Chat />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/account/:tab" element={user?<ProfileSettings />:<Login/>} />
+          <Route path="/profile" element={user?<Profile />:<Login/>} />
+          <Route path="/products" element={user?<Marketplace />:<Login/>} />
+          <Route path="/products/:tab" element={user?<Marketplace />:<Login/>} />
+          <Route path="/products/:tab/:subtab" element={user?<Marketplace />:<Login/>} />
+          <Route path="/product/:id" element={user?<ProductDetails />:<Login/>} />
+          <Route path="/product/add" element={user && user.role === "supplier" ? <AddProduct /> : <NotFound />} />
+          <Route path="/product/update/:id" element={user && user.role === "supplier" ? <EditProduct/> : <NotFound />} />
+          <Route path="/cart" element={user&&<Cart />} />
+          <Route path="/suppliers" element={user&&<Suppliers />} />
+          <Route path="/suppliers/:id" element={user&&<SupplierDetails />} />
+          <Route path="/messages" element={user&&<Chats />} />
+          <Route path="/messages/:id" element={user&&<Chat />} />
+          <Route path="/dashboard" element={user && user.role === "supplier" ? <Dashboard /> : <NotFound />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetails />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/sub-admin" element={<SubAdminDashboard />} />
-          <Route path="/create-store" element={<CreateStore/>} />
+          <Route path="/admin" element={user && user.role === "admin" ? <Admin /> : <NotFound />} />
+          <Route path="/sub-admin" element={user && user.role === "sub-admin" ? <SubAdminDashboard /> : <NotFound />} />
+          <Route path="/create-store" element={user&&<CreateStore/>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

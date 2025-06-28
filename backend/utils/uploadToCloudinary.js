@@ -1,13 +1,20 @@
-export const uploadToCloudinary = async (file, folder = 'company_assets') => {
-  try {
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: folder,
-      resource_type: 'auto', // Automatically detect file type (image/video)
-      quality: 'auto:good',
-      fetch_format: 'auto',
-    });
-    return result.secure_url;
-  } catch (error) {
-    throw new Error(`Cloudinary upload failed: ${error.message}`);
-  }
+import cloudinary from '../config/cloudinary.js';
+import streamifier from "streamifier";
+export const uploadToCloudinary = (file, folder, resourceType = "auto") => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: resourceType,
+      },
+      (error, result) => {
+        if (error) {
+          return reject(new Error("Cloudinary upload failed: " + error.message));
+        }
+        resolve(result.secure_url);
+      }
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
+  });
 };

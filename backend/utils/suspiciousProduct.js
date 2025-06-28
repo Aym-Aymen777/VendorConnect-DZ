@@ -67,7 +67,9 @@ function isSuspiciousProduct({ title, description, imageUrl }) {
   const textFlagged = bannedKeywords.some((keyword) => text.includes(keyword.toLowerCase()));
 
   // تحقّق من وجود كلمات مشبوهة في رابط Cloudinary
-  const urlFlagged = imageUrl && bannedKeywords.some((keyword) => imageUrl.toLowerCase().includes(keyword.toLowerCase()));
+const urlFlagged = imageUrl && bannedKeywords.some((keyword) =>
+  String(imageUrl).toLowerCase().includes(keyword.toLowerCase())
+);
 
   return textFlagged || urlFlagged;
 }
