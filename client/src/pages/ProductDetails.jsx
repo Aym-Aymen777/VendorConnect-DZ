@@ -121,9 +121,9 @@ export default function ProductDetails() {
                 )}
 
                 {/* Discount Badge */}
-                {product?.price && product?.flashDealed?.isFlashDealed && (
+                {product?.price && product?.flashDeals?.isActive && (
                   <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    {product?.flashDealed?.discount} % OFF
+                    {product?.flashDeals?.discount} % OFF
                   </div>
                 )}
               </div>
@@ -190,9 +190,17 @@ export default function ProductDetails() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl font-bold text-[#e1a95f]">
-                    {product?.price} DZD
+                    {product?.flashDeals?.isActive ? (
+                      <>
+                        <span className="text-3xl font-bold text-[#e1a95f]">
+                          {product.flashDeals.discountPrice} DZD
+                        </span>
+                      </>
+                    ) : (
+                      <>{product.price} DZD</>
+                    )}
                   </span>
-                  {product?.price && (
+                  {product?.price && product?.flashDeals?.isActive && (
                     <span className="text-lg text-gray-500 line-through">
                       {product?.price} DZD
                     </span>
@@ -206,11 +214,11 @@ export default function ProductDetails() {
                       fill="currentColor"
                     />
                     <span className="font-semibold text-[#e1a95f]">
-                      {product?.rating }
+                      {product?.rating}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">
-                    ({product?.views } reviews)
+                    ({product?.views} reviews)
                   </span>
                 </div>
               </div>
@@ -271,7 +279,7 @@ export default function ProductDetails() {
 
                 <div className="flex gap-3">
                   <button
-                    disabled={product?.stock<=0}
+                    disabled={product?.stock <= 0}
                     className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#e1a95f] text-white rounded-lg font-semibold hover:bg-[#d89a4b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <ShoppingCart size={18} /> Add to Cart
                   </button>
@@ -298,13 +306,18 @@ export default function ProductDetails() {
                           className="text-[#e1a95f]"
                           fill="currentColor"
                         />
-                        <span>{product?.supplier?.supplierProfile?.rating || "N/A"}</span>
+                        <span>
+                          {product?.supplier?.supplierProfile?.rating || "N/A"}
+                        </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Truck size={16} />
-                    <span>{product?.supplier?.supplierProfile?.dileveryTime || "N/A"}</span>
+                    <span>
+                      {product?.supplier?.supplierProfile?.dileveryTime ||
+                        "N/A"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -371,18 +384,14 @@ export default function ProductDetails() {
                   Specifications
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {product?.specifications.map(
-                    ({key,value}) => (
-                      <div
-                        key={key}
-                        className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="font-medium text-[#1f3b73]">
-                          {key}:
-                        </span>
-                        <span className="text-gray-700">{value}</span>
-                      </div>
-                    )
-                  )}
+                  {product?.specifications.map(({ key, value }) => (
+                    <div
+                      key={key}
+                      className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="font-medium text-[#1f3b73]">{key}:</span>
+                      <span className="text-gray-700">{value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -402,7 +411,7 @@ export default function ProductDetails() {
                 <div className="flex items-center gap-4 mb-6 p-4 bg-[#f4f2ed] rounded-lg">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-[#e1a95f]">
-                      {product?.rating }
+                      {product?.rating}
                     </div>
                     <div className="flex items-center gap-1 mt-1">
                       {[1, 2, 3, 4, 5].map((star) => (

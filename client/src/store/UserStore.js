@@ -208,7 +208,6 @@ const useUserStore = create((set) => ({
       return null;
     }
   },
-  
 
   addProduct: async (productData) => {
     try {
@@ -216,7 +215,7 @@ const useUserStore = create((set) => ({
       const response = await axios.post(`api/v1/product/add`, productData, {
         withCredentials: true,
       });
-      set({ isLoading: false , user: response.data.user});
+      set({ isLoading: false, user: response.data.user });
       toast.success("Product added successfully");
       return response.data.product;
     } catch (error) {
@@ -227,8 +226,16 @@ const useUserStore = create((set) => ({
     }
   },
 
-  
-
+  getMarketPlaceProducts: async () => {
+    try {
+      const res = await axios.get("/api/v1/product/all",{
+        withCredentials:true,
+      })
+      return res?.data
+    } catch (error) {
+      toast.error(error.response?.data?.message || "error fetching products")
+    }
+  },
 }));
 
 export default useUserStore;

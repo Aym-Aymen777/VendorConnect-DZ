@@ -41,11 +41,12 @@ const productSchema = new mongoose.Schema(
         value: String,
       },
     ],
-    falshDealed:{
-      isFlashDealed:Boolean,
-      discount:Number,
-      startDate:Date,
-      endDate:Date
+    flashDeals: {
+      isActive: Boolean,
+      discountPrice:Number,
+      discount: Number,
+      startDate: Date,
+      endDate: Date,
     },
     createdAt: { type: Date, default: Date.now },
   },

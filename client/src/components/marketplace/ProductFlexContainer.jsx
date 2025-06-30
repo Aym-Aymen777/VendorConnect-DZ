@@ -5,11 +5,11 @@ export default function ProductsFlexContainer({ items, onAddToCart, onToggleFavo
     <div className="flex gap-6 overflow-x-auto pb-4 flex-wrap justify-center md:justify-start md:align-start align-center">
       {items.map((item) => (
         <ProductCard
-          key={item.id}
+          key={item._id}
           item={item}
           onAddToCart={onAddToCart}
           onToggleFavorite={onToggleFavorite}
-          isFavorite={favorites.includes(item.id)}
+          isFavorite={favorites.includes(item._id)}
         />
       ))}
     </div>

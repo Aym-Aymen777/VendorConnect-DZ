@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+ import mongoose from "mongoose";
 import { envVars } from "../utils/envVars.js";
 
 export const connectDB = async () => {
@@ -12,5 +12,6 @@ export const connectDB = async () => {
     console.log("❌ connection error :", error);
     process.exit(1);
   }
-};
+}; 
+
 

@@ -2,6 +2,8 @@ import { Product } from "../models/product.model.js";
 import { User } from "../models/user.model.js";
 import cloudinary from "../config/cloudinary.js";
 import isSuspiciousProduct from "../utils/suspiciousProduct.js";
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const getProducts = async (req, res) => {
   try {
@@ -45,10 +47,12 @@ export const getProductDetails = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
-    
+
     const supplierId = product.supplier;
-    const productOwner = await User.findById(supplierId).populate("supplierProfile");
-    
+    const productOwner = await User.findById(supplierId).populate(
+      "supplierProfile"
+    );
+
     product.supplier = productOwner;
 
     res.status(200).json(product);
@@ -59,30 +63,36 @@ export const getProductDetails = async (req, res) => {
 };
 export const addProduct = async (req, res) => {
   try {
-    const { 
-      title, 
-      description, 
-      price, 
-      category, 
+    const {
+      title,
+      description,
+      price,
+      category,
       country,
       features,
       stock,
-      specifications
+      specifications,
     } = req.body;
 
     // Validate required fields
     if (!title || !description || !price || !category || !country) {
-      return res.status(400).json({ message: "All required fields must be provided" });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
     }
 
     // Validate price is a positive number
     if (isNaN(price) || price <= 0) {
-      return res.status(400).json({ message: "Price must be a positive number" });
+      return res
+        .status(400)
+        .json({ message: "Price must be a positive number" });
     }
 
     // Validate stock if provided
     if (stock !== undefined && (isNaN(stock) || stock < 0)) {
-      return res.status(400).json({ message: "Stock must be a non-negative number" });
+      return res
+        .status(400)
+        .json({ message: "Stock must be a non-negative number" });
     }
 
     if (!req.user) {
@@ -107,20 +117,22 @@ export const addProduct = async (req, res) => {
       req.files.map(
         (file) =>
           new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-              {
-                folder: "products",
-                resource_type: "auto",
-                transformation: [{ fetch_format: "auto", quality: "auto" }],
-              },
-              (error, result) => {
-                if (error) return reject(error);
-                resolve({
-                  type: result.resource_type,
-                  url: result.secure_url,
-                });
-              }
-            ).end(file.buffer); // Use buffer, not path
+            cloudinary.uploader
+              .upload_stream(
+                {
+                  folder: "products",
+                  resource_type: "auto",
+                  transformation: [{ fetch_format: "auto", quality: "auto" }],
+                },
+                (error, result) => {
+                  if (error) return reject(error);
+                  resolve({
+                    type: result.resource_type,
+                    url: result.secure_url,
+                  });
+                }
+              )
+              .end(file.buffer); // Use buffer, not path
           })
       )
     );
@@ -144,7 +156,9 @@ export const addProduct = async (req, res) => {
     let parsedFeatures = [];
     if (features) {
       try {
-        parsedFeatures = Array.isArray(features) ? features : JSON.parse(features);
+        parsedFeatures = Array.isArray(features)
+          ? features
+          : JSON.parse(features);
       } catch (error) {
         return res.status(400).json({ message: "Invalid features format" });
       }
@@ -154,22 +168,29 @@ export const addProduct = async (req, res) => {
     let parsedSpecifications = [];
     if (specifications) {
       try {
-        parsedSpecifications = Array.isArray(specifications) 
-          ? specifications 
+        parsedSpecifications = Array.isArray(specifications)
+          ? specifications
           : JSON.parse(specifications);
-        
+
         // Validate specifications format
         const isValidSpecs = parsedSpecifications.every(
-          spec => spec.key && spec.value && typeof spec.key === 'string' && typeof spec.value === 'string'
+          (spec) =>
+            spec.key &&
+            spec.value &&
+            typeof spec.key === "string" &&
+            typeof spec.value === "string"
         );
-        
+
         if (!isValidSpecs) {
-          return res.status(400).json({ 
-            message: "Specifications must be an array of objects with 'key' and 'value' properties" 
+          return res.status(400).json({
+            message:
+              "Specifications must be an array of objects with 'key' and 'value' properties",
           });
         }
       } catch (error) {
-        return res.status(400).json({ message: "Invalid specifications format" });
+        return res
+          .status(400)
+          .json({ message: "Invalid specifications format" });
       }
     }
 
@@ -187,7 +208,7 @@ export const addProduct = async (req, res) => {
       isFeatured: false,
       views: 0,
       rating: 0,
-      reviews: []
+      reviews: [],
     };
 
     // Add optional fields if provided
@@ -217,7 +238,6 @@ export const addProduct = async (req, res) => {
   }
 };
 
-
 // Helper to extract public ID from Cloudinary URL
 const extractPublicId = (url) => {
   try {
@@ -232,72 +252,161 @@ const extractPublicId = (url) => {
 
 export const updateProduct = async (req, res) => {
   try {
-    const { title, description, price, category, country } = req.body;
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
+    const {
+      title,
+      description,
+      price,
+      category,
+      country,
+      stock,
+      features,
+      specifications,
+      flashDeals,
+      existingMedia,
+      removedMedia,
+    } = req.body;
+
     const productId = req.params.id;
-    const media = req.files;
+    const newMediaFiles = req.files;
 
     if (!productId) {
-      return res.status(400).json({ message: "Product id is required" });
+      return res.status(400).json({ message: "Product ID is required." });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ message: "Product not found." });
     }
 
-    // 🔒 Only owner can update
     if (product.supplier.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Forbidden" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this product." });
     }
 
-    // ✅ Update product fields
-    product.title = title || product.title;
-    product.description = description || product.description;
-    product.price = price || product.price;
-    product.category = category || product.category;
-    product.country = country || product.country;
+    // Safe parse helper
+    const safeParse = (data, fallback) => {
+      try {
+        return typeof data === "string" ? JSON.parse(data) : data;
+      } catch {
+        return fallback;
+      }
+    };
 
-    // 🔄 Update media if new files provided
-    if (media && media.length > 0) {
-      // 1. Delete old media
-      for (const item of product.media) {
-        const publicId = extractPublicId(item.url);
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId, {
-            resource_type: item.type || "image",
-          });
+    const parsedFeatures = safeParse(features, []);
+    const parsedSpecs = safeParse(specifications, []);
+    const parsedFlashDeals = safeParse(flashDeals, {});
+    let parsedExistingMedia = safeParse(existingMedia, []);
+    const parsedRemovedMedia = safeParse(removedMedia, []);
+
+    if (!Array.isArray(parsedExistingMedia)) parsedExistingMedia = [];
+
+    // Update product fields
+    if (title) product.title = title;
+    if (description) product.description = description;
+    if (price) product.price = parseFloat(price);
+    if (category) product.category = category;
+    if (country) product.country = country;
+    if (stock !== undefined) {
+      product.stock = stock === "" ? undefined : parseInt(stock);
+    }
+
+    product.features = parsedFeatures;
+    product.specifications = parsedSpecs;
+
+    if (parsedFlashDeals.isActive) {
+      product.flashDeals = {
+        isActive: true,
+        discount: parseFloat(parsedFlashDeals.discount) || 0,
+        discountPrice:
+          product.price - (product.price * parsedFlashDeals.discount) / 100,
+        startDate: new Date(parsedFlashDeals.startDate),
+        endDate: new Date(parsedFlashDeals.endDate),
+      };
+    } else {
+      product.flashDeals = {
+        isActive: false,
+        discount: 0,
+        startDate: null,
+        endDate: null,
+      };
+    }
+
+    // 🔥 Remove deleted media from Cloudinary
+    if (Array.isArray(parsedRemovedMedia) && parsedRemovedMedia.length > 0) {
+      for (const mediaUrl of parsedRemovedMedia) {
+        try {
+          const isVideo =
+            mediaUrl.includes(".mp4") ||
+            mediaUrl.includes(".mov") ||
+            mediaUrl.includes(".avi");
+          const resourceType = isVideo ? "video" : "image";
+          await deleteFromCloudinary(mediaUrl, resourceType);
+        } catch (err) {
+          console.error(
+            `❌ Failed to delete from Cloudinary: ${mediaUrl}`,
+            err
+          );
         }
       }
-
-      // 2. Upload new media
-      const uploadedMedia = await Promise.all(
-        media.map(async (file) => {
-          const result = await cloudinary.uploader.upload(file.path, {
-            folder: "products",
-            resource_type: "auto",
-            transformation: [{ fetch_format: "auto", quality: "auto" }],
-          });
-          return {
-            type: result.resource_type,
-            url: result.secure_url,
-          };
-        })
-      );
-      console.log("Uploaded Media", uploadedMedia);
-      product.media = uploadedMedia;
     }
+
+    // 🖼 Upload new media
+    let newUploadedMedia = [];
+    if (Array.isArray(newMediaFiles) && newMediaFiles.length > 0) {
+      try {
+        newUploadedMedia = await Promise.all(
+          newMediaFiles.map(async (file) => {
+            const url = await uploadToCloudinary(file, "products");
+            const isVideo = file.mimetype.startsWith("video");
+            return {
+              type: isVideo ? "video" : "image",
+              url,
+            };
+          })
+        );
+      } catch (err) {
+        console.error("❌ Cloudinary upload error:", err);
+        return res
+          .status(500)
+          .json({ message: "Failed to upload media files" });
+      }
+    }
+
+    // Combine existing and new media
+    const existingMediaObjects = parsedExistingMedia.map((item) => {
+      if (typeof item === "object" && item.url) return item;
+      const isVideo =
+        item.includes(".mp4") || item.includes(".mov") || item.includes(".avi");
+      return {
+        type: isVideo ? "video" : "image",
+        url: item,
+      };
+    });
+
+    const mergedMedia = [...existingMediaObjects, ...newUploadedMedia];
+    if (mergedMedia.length > 5) {
+      return res
+        .status(400)
+        .json({ message: "Maximum of 5 media files allowed." });
+    }
+
+    product.media = mergedMedia;
 
     await product.save();
 
-    res.status(200).json({
-      message: "Product updated successfully",
-      product,
+    return res.status(200).json({
+      success: true,
+      message: "✅ Product updated successfully.",
+      data: product,
     });
   } catch (error) {
-    console.error("Error in update product controller:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("❌ updateProduct failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 

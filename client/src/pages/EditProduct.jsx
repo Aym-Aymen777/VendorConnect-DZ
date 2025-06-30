@@ -28,7 +28,8 @@ export default function EditProduct() {
     features: [],
     specifications: [],
     media: [],
-    existingMedia: [], // For existing media URLs
+    existingMedia: [], // For existing media URLs that we want to keep
+    originalMedia: [], // Store original media for comparison
     flashDeals: {
       isActive: false,
       discount: "",
@@ -52,6 +53,20 @@ export default function EditProduct() {
         const response = await axios.get(`/api/v1/product/details/${id}`);
         const product = response.data.data || response.data;
         
+        // Normalize media format - ensure all media items have type and url
+        const normalizedMedia = (product.media || []).map(media => {
+          if (typeof media === 'string') {
+            // If media is just a URL string, determine type and create object
+            const isVideo = media.includes('.mp4') || media.includes('.mov') || media.includes('.avi');
+            return {
+              type: isVideo ? "video" : "image",
+              url: media
+            };
+          }
+          // If media is already an object, use it as is
+          return media;
+        });
+        
         setForm({
           title: product.title || "",
           description: product.description || "",
@@ -62,7 +77,8 @@ export default function EditProduct() {
           features: product.features || [],
           specifications: product.specifications || [],
           media: [],
-          existingMedia: product.media || [],
+          existingMedia: [...normalizedMedia], // Current media we want to keep
+          originalMedia: [...normalizedMedia], // Store original for comparison
           flashDeals: {
             isActive: product.flashDeals?.isActive || false,
             discount: product.flashDeals?.discount?.toString() || "",
@@ -74,7 +90,7 @@ export default function EditProduct() {
         });
       } catch (err) {
         console.log("Fetch product error:", err);
-        toast.error(err.response?.data?.message||"Failed to load product data" );
+        toast.error(err.response?.data?.message || "Failed to load product data");
         navigate("/products"); // Redirect to products list
       } finally {
         setFetchingProduct(false);
@@ -296,16 +312,30 @@ export default function EditProduct() {
       // Add flash deals data
       formData.append("flashDeals", JSON.stringify(flashDeals));
 
+      // Calculate which media was removed by comparing original with current existing
+      const originalMediaUrls = form.originalMedia.map(media => 
+        typeof media === 'string' ? media : media.url
+      );
+      const currentMediaUrls = form.existingMedia.map(media => 
+        typeof media === 'string' ? media : media.url
+      );
+      const removedMedia = originalMediaUrls.filter(url => !currentMediaUrls.includes(url));
+
       // Add existing media URLs to keep
       if (form.existingMedia.length > 0) {
         formData.append("existingMedia", JSON.stringify(form.existingMedia));
+      }
+
+      // Add removed media URLs for deletion
+      if (removedMedia.length > 0) {
+        formData.append("removedMedia", JSON.stringify(removedMedia));
       }
 
       // Append new media files
       form.media.forEach((file) => {
         formData.append("media", file);
       });
-
+      
       await axios.put(`/api/v1/product/update/${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -646,32 +676,37 @@ export default function EditProduct() {
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-[#1f3b73] mb-2">Current Media:</h4>
                   <div className="flex flex-wrap gap-3">
-                    {form.existingMedia.map((mediaUrl, idx) => (
-                      <div
-                        key={idx}
-                        className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-[#e1a95f] bg-[#f4f2ed]">
-                        {mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('.avi') ? (
-                          <video
-                            src={mediaUrl}
-                            className="w-full h-full object-cover"
-                            muted
-                          />
-                        ) : (
-                          <img
-                            src={mediaUrl}
-                            alt={`Existing ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExistingMedia(idx)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
-                          title="Remove media">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
+                    {form.existingMedia.map((media, idx) => {
+                      const mediaUrl = typeof media === 'string' ? media : media.url;
+                      const isVideo = mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('.avi') || media.type === 'video';
+                      
+                      return (
+                        <div
+                          key={idx}
+                          className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-[#e1a95f] bg-[#f4f2ed]">
+                          {isVideo ? (
+                            <video
+                              src={mediaUrl}
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                          ) : (
+                            <img
+                              src={mediaUrl}
+                              alt={`Existing ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingMedia(idx)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
+                            title="Remove media">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -720,63 +755,85 @@ export default function EditProduct() {
                 </div>
               )}
 
-              <p className="text-xs text-gray-500 mt-1">
-                {form.media.length + form.existingMedia.length}/5 files
+              {/* Media count info */}
+              <p className="text-sm text-[#1f3b73] mt-2">
+                {form.existingMedia.length + form.media.length} of 5 media files selected
               </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#e1a95f]/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              style={{
-                backgroundColor: "#1f3b73",
-                boxShadow: "0 0 0 4px rgba(225, 169, 95, 0.10)",
-              }}>
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Updating Product...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center">
-                  <UploadCloud className="w-5 h-5 mr-2" />
-                  Update Product
-                </span>
-              )}
-            </button>
+            {/* Submit Button */}
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#1f3b73] hover:bg-[#2a4a8a] text-white"
+                }`}>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="w-5 h-5" />
+                    Update Product
+                  </>
+                )}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => navigate("/products")}
+                className="px-6 py-3 border-2 border-[#e1a95f] text-[#1f3b73] rounded-lg hover:bg-[#e1a95f] hover:text-white transition-colors">
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#e1a95f]">
               <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="w-6 h-6 text-red-500" />
-                <h3 className="text-lg font-semibold text-[#1f3b73]">Delete Product</h3>
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+                <h2 className="text-xl font-bold text-[#1f3b73]">Delete Product</h2>
               </div>
+              
               <p className="text-[#1f3b73] mb-6">
                 Are you sure you want to delete this product? This action cannot be undone.
               </p>
+              
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-4 py-2 border-2 border-[#e1a95f] text-[#1f3b73] rounded-lg hover:bg-[#f4f2ed] transition-colors">
-                  Cancel
-                </button>
                 <button
                   onClick={handleDeleteProduct}
                   disabled={deleting}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center">
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                    deleting
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-red-500 hover:bg-red-600 text-white"
+                  }`}>
                   {deleting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Deleting...
                     </>
                   ) : (
-                    "Delete"
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </>
                   )}
+                </button>
+                
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 py-2 px-4 border-2 border-[#e1a95f] text-[#1f3b73] rounded-lg hover:bg-[#e1a95f] hover:text-white transition-colors disabled:opacity-50">
+                  Cancel
                 </button>
               </div>
             </div>

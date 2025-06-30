@@ -33,6 +33,7 @@ const CreateStore = lazy(() => import("./pages/CreateStore"));
 
 function App() {
   const { user } = useAuthCheck();
+
  
   return (
     <>

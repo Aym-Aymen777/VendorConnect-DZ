@@ -145,9 +145,8 @@ export default function Profile() {
     try {
       const fetchedOrders = await getOrders();
       setOrders(fetchedOrders || []);
-      console.log("Orders:", fetchedOrders);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch orders");
       setOrders([]);
     } finally {
       setOrdersLoading(false);
