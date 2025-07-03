@@ -260,7 +260,7 @@ const Header = () => {
     },
     {
       name: "Messages",
-      href: "messages",
+      href: "/messages",
       hasDropdown: false,
       icon: null,
     },
@@ -418,7 +418,7 @@ const Header = () => {
               {/* Cart */}
               <button 
                 className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors duration-200 relative group"
-                onClick={() => navigate("/cart")}
+                onClick={() => navigate("/profile")}
               >
                 <ShoppingCart className="h-6 w-6" />
                 {cartCount > 0 && (
@@ -460,7 +460,7 @@ const Header = () => {
           <div className="md:hidden flex items-center space-x-2">
             {user && (
               <>
-                <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors relative">
+                <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors relative" onClick={() => navigate("/account/saved")}>
                   <Heart className="h-5 w-5" />
                   {wishlistCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
@@ -468,7 +468,7 @@ const Header = () => {
                     </span>
                   )}
                 </button>
-                <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors relative">
+                <button className="p-2 text-[#1f3b73] hover:text-[#e1a95f] transition-colors relative" onClick={() => navigate("/profile")}>
                   <ShoppingCart className="h-5 w-5" />
                   {cartCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">

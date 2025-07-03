@@ -12,9 +12,12 @@ import {
   Trash2,
 } from "lucide-react";
 import Header from "../components/common/Header";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import useUserStore from "../store/UserStore";
+import { formatDate } from "../utils/formatDate";
+import useAuthStore from "../store/AuthStore";
 
-const mockChats = [
+/* const chats = [
   {
     id: 1,
     name: "Support Team",
@@ -26,105 +29,93 @@ const mockChats = [
     online: true,
     type: "support",
   },
-  {
-    id: 2,
-    name: "BuildPro Supplies",
-    avatar: "/avatars/supplier1.png",
-    lastMessage: "We sent your invoice. Payment due in 30 days.",
-    time: "Yesterday",
-    unread: 0,
-    pinned: false,
-    online: false,
-    type: "supplier",
-  },
-  {
-    id: 3,
-    name: "HomeStyle Furnishings",
-    avatar: "/avatars/supplier2.png",
-    lastMessage: "Thank you for your feedback on our latest collection!",
-    time: "2 days ago",
-    unread: 0,
-    pinned: false,
-    online: true,
-    type: "supplier",
-  },
-  {
-    id: 4,
-    name: "Tech Solutions Inc",
-    avatar: "/avatars/supplier3.png",
-    lastMessage: "New software update available for download",
-    time: "3 days ago",
-    unread: 1,
-    pinned: false,
-    online: false,
-    type: "vendor",
-  },
-  {
-    id: 5,
-    name: "Customer Service",
-    avatar: "/avatars/customer.png",
-    lastMessage: "How can we help you today?",
-    time: "1 week ago",
-    unread: 0,
-    pinned: true,
-    online: true,
-    type: "support",
-  },
-];
+]; */
 
 export default function Chats() {
   const [search, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [filteredChats, setFilteredChats] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef(null);
   const menuRef = useRef(null);
 
+  const { getUserChats, chats } = useUserStore();
+  const { user } = useAuthStore();
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      await getUserChats();
+    };
+    fetchChats();
+  }, [getUserChats]);
+  console.log(chats);
+
   const filters = [
-    { id: "all", label: "All Chats", count: mockChats.length },
+    { id: "all", label: "All Chats", count: chats?.length },
     {
       id: "unread",
       label: "Unread",
-      count: mockChats.filter((c) => c.unread > 0).length,
+      count: chats?.filter((c) => !c.seen > 0).length,
     },
     {
       id: "pinned",
       label: "Pinned",
-      count: mockChats.filter((c) => c.pinned).length,
+      count: chats?.filter((c) => c.pinned).length,
     },
     {
       id: "support",
       label: "Support",
-      count: mockChats.filter((c) => c.type === "support").length,
+      count: chats?.filter((c) => c.type === "support").length,
     },
     {
       id: "supplier",
       label: "Suppliers",
-      count: mockChats.filter((c) => c.type === "supplier").length,
+      count: chats?.filter((c) => c.type === "supplier").length,
     },
   ];
 
-  const filteredChats = mockChats
-    .filter((chat) => {
-      const matchesSearch =
-        chat.name.toLowerCase().includes(search.toLowerCase()) ||
-        chat.lastMessage.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    const filtered = chats
+      ?.filter((chat) => {
+        const searchLower = search.toLowerCase();
 
-      if (selectedFilter === "all") return matchesSearch;
-      if (selectedFilter === "unread") return matchesSearch && chat.unread > 0;
-      if (selectedFilter === "pinned") return matchesSearch && chat.pinned;
-      return matchesSearch && chat.type === selectedFilter;
-    })
-    .sort((a, b) => {
-      // Pinned chats first
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      // Then by unread count
-      if (a.unread > 0 && b.unread === 0) return -1;
-      if (a.unread === 0 && b.unread > 0) return 1;
-      return 0;
-    });
+        const matchesSearch =
+          chat.receiver.name?.toLowerCase().includes(searchLower) ||
+          chat.receiver.username?.toLowerCase().includes(searchLower) ||
+          chat.lastMessage?.message?.toLowerCase().includes(searchLower);
+
+        if (selectedFilter === "all") return matchesSearch;
+        if (selectedFilter === "unread")
+          return matchesSearch && chat.unread > 0;
+        if (selectedFilter === "pinned") return matchesSearch && chat.pinned;
+        return matchesSearch && chat.type === selectedFilter;
+      })
+      .sort((a, b) => {
+        // 1. Pinned chats come first
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+
+        // 2. Chats with unread messages come next
+        if (a.unread > 0 && b.unread === 0) return -1;
+        if (a.unread === 0 && b.unread > 0) return 1;
+
+        // 3. Optionally sort by last message date (if available)
+        if (a.lastMessage?.createdAt && b.lastMessage?.createdAt) {
+          return (
+            new Date(b.lastMessage.createdAt) -
+            new Date(a.lastMessage.createdAt)
+          );
+        }
+
+        return 0;
+      });
+
+    setFilteredChats(filtered);
+  }, [chats, search, selectedFilter]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -153,14 +144,6 @@ export default function Chats() {
     </button>
   );
 
-  const getAvatarFallback = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
   return (
     <div tosName="min-h-screen bg-[#f4f2ed]">
       <Header />
@@ -179,10 +162,14 @@ export default function Chats() {
               </p>
             </div>
           </div>
-          <button className="flex items-center gap-2 bg-[#e1a95f] hover:bg-[#d4953f] text-white px-4 py-2 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105">
-            <Plus size={18} />
-            New Chat
-          </button>
+          {user.role === "supplier" && (
+            <button
+              onClick={() => navigate("/profile")}
+              className="flex items-center gap-2 bg-[#e1a95f] hover:bg-[#d4953f] text-white px-4 py-2 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:scale-105">
+              <Plus size={18} />
+              New Chat
+            </button>
+          )}
         </div>
 
         {/* Search and Filters */}
@@ -275,19 +262,47 @@ export default function Chats() {
             <div className="divide-y divide-[#f4f2ed]">
               {filteredChats.map((chat, index) => (
                 <div
-                  key={chat.id}
+                  key={chat._id}
                   className="relative group hover:bg-gradient-to-r hover:from-[#f4f2ed] hover:to-transparent transition-all duration-300"
                   style={{ animationDelay: `${index * 50}ms` }}>
                   <Link
-                    to={`/messages/${chat.id}`}
+                    to={`/messages/${chat._id}`}
                     className="flex items-center gap-4 px-6 py-6 transition-all duration-300 hover:translate-x-1">
                     {/* Avatar with online status */}
                     <div className="relative">
-                      <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-[#e1a95f]/30 bg-gradient-to-br from-[#e1a95f]/20 to-[#1f3b73]/10 flex items-center justify-center font-semibold text-[#1f3b73]">
-                        {getAvatarFallback(chat.name)}
-                      </div>
-                      {chat.online && (
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full animate-pulse"></div>
+                      {chat.receiver._id.toString() !==
+                        user._id.toString() && (
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-[#e1a95f]/30 bg-gradient-to-br from-[#e1a95f]/20 to-[#1f3b73]/10 flex items-center justify-center font-semibold text-[#1f3b73]">
+                          {chat.receiver?.profile?.avatar ? (
+                            <img
+                              src={chat.receiver.profile.avatar}
+                              alt={chat.receiver.name || "Avatar"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>
+                              {chat.receiver?.name?.charAt(0)?.toUpperCase() ||
+                                "U"}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {chat.sender._id.toString() !==
+                        user._id.toString() && (
+                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#e1a95f]/30 bg-gradient-to-br from-[#e1a95f]/20 to-[#1f3b73]/10 flex items-center justify-center font-semibold text-[#1f3b73]">
+                          {chat.sender?.profile?.avatar ? (
+                            <img
+                              src={chat.sender.profile.avatar}
+                              alt={chat.sender.username || "Avatar"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>
+                              {chat.sender?.name?.charAt(0)?.toUpperCase() ||
+                                "U"}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {chat.pinned && (
                         <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#e1a95f] border-2 border-white rounded-full flex items-center justify-center">
@@ -301,7 +316,7 @@ export default function Chats() {
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-[#1f3b73] truncate text-lg">
-                            {chat.name}
+                            {chat.receiver.name || chat.receiver.username}
                           </span>
                           {chat.type === "support" && (
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
@@ -311,10 +326,10 @@ export default function Chats() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-[#e1a95f] font-medium">
-                            {chat.time}
+                            {formatDate(chat.latestMessage?.createdAt)}
                           </span>
                           <button
-                            onClick={(e) => handleMenuClick(chat.id, e)}
+                            onClick={(e) => handleMenuClick(chat._id, e)}
                             className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white rounded-lg transition-all duration-200">
                             <MoreVertical
                               size={16}
@@ -325,12 +340,13 @@ export default function Chats() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[#1f3b73]/70 truncate pr-4 leading-relaxed">
-                          {chat.lastMessage}
+                          {chat.latestMessage?.message}
                         </span>
                         <div className="flex items-center gap-2">
-                          {chat.unread > 0 && (
+                          {chat.messages?.filter((msg) => !msg.seen).length >
+                            0 && (
                             <span className="bg-gradient-to-r from-[#e1a95f] to-[#d4953f] text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg animate-pulse">
-                              {chat.unread}
+                              {chat.messages?.filter((msg) => !msg.seen).length}
                             </span>
                           )}
                           <ArrowRight
@@ -343,7 +359,7 @@ export default function Chats() {
                   </Link>
 
                   {/* Context Menu */}
-                  {activeMenu === chat.id && (
+                  {activeMenu === chat._id && (
                     <div
                       ref={menuRef}
                       className="absolute right-6 top-16 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl py-2 min-w-48 animate-in slide-in-from-top-2 duration-200">
@@ -379,7 +395,7 @@ export default function Chats() {
               <div>
                 <p className="text-[#1f3b73]/60 text-sm">Total Conversations</p>
                 <p className="text-2xl font-bold text-[#1f3b73]">
-                  {mockChats.length}
+                  {chats?.length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-[#1f3b73]/10 rounded-xl flex items-center justify-center">
@@ -392,24 +408,15 @@ export default function Chats() {
               <div>
                 <p className="text-[#1f3b73]/60 text-sm">Unread Messages</p>
                 <p className="text-2xl font-bold text-[#e1a95f]">
-                  {mockChats.reduce((sum, chat) => sum + chat.unread, 0)}
+                  {
+                    chats
+                      .map((chat) => chat.messages?.filter((msg) => !msg.seen))
+                      .flat().length
+                  }
                 </p>
               </div>
               <div className="w-12 h-12 bg-[#e1a95f]/10 rounded-xl flex items-center justify-center">
                 <User className="text-[#e1a95f]" size={24} />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-[#1f3b73]/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[#1f3b73]/60 text-sm">Online Contacts</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {mockChats.filter((chat) => chat.online).length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <div className="w-6 h-6 bg-green-500 rounded-full animate-pulse"></div>
               </div>
             </div>
           </div>

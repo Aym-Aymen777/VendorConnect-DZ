@@ -5,10 +5,11 @@ import { Product } from "../models/product.model.js";
 export const createQuotation = async (req, res) => {
   try {
     const { product, message } = req.body;
-
     if (!product || !message) {
       return res.status(400).json({ message: "All fields are required" });
     }
+
+    
 
     const foundProduct = await Product.findById(product);
     if (!foundProduct) {
@@ -35,8 +36,8 @@ export const createQuotation = async (req, res) => {
 export const getQuotation = async (req, res) => {
   try {
     const quotation = await Quotation.findById(req.params.id)
-      .populate("consumer", "name email")
-      .populate("product", "title");
+      .populate("consumer", "name username email phone country isVerified ")
+      .populate("product", "title media price flashDeals.discountPrice category description supplier");
 
     if (!quotation) {
       return res.status(404).json({ message: "Quotation not found" });
@@ -72,7 +73,7 @@ export const getQuotations = async (req, res) => {
       const productIds = supplierProducts.map((p) => p._id);
 
       quotations = await Quotation.find({ product: { $in: productIds } })
-        .populate("consumer", "username")
+        .populate("consumer", "username ")
         .populate("product", "title price category");
     } else {
       // Else get quotations requested by the consumer
@@ -91,7 +92,7 @@ export const getQuotations = async (req, res) => {
 // Update a quotation status or response (supplier only)
 export const updateQuotation = async (req, res) => {
   try {
-    const { status, message } = req.body;
+    const { status } = req.body;
     const quotation = await Quotation.findById(req.params.id).populate(
       "product"
     );
@@ -106,11 +107,10 @@ export const updateQuotation = async (req, res) => {
     }
 
     if (status) quotation.status = status;
-    if (message) quotation.message = message;
 
     await quotation.save();
     res.status(200).json({
-      message: "Quotation updated",
+      message: "status updated to " + status,
       quotation,
     });
   } catch (error) {

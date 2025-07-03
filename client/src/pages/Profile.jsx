@@ -13,17 +13,14 @@ import {
   Shield,
   Package,
   TrendingUp,
-  Users,
   DollarSign,
   Eye,
   Plus,
-  Link2,
-  Edit,
   Camera,
   Loader2,
-  Facebook,
+  Trash,
+  Trash2,
 } from "lucide-react";
-
 
 import Header from "../components/common/Header";
 import { Link } from "react-router-dom";
@@ -33,6 +30,8 @@ import useUserStore from "../store/UserStore";
 import { formatDate } from "../utils/formatDate";
 import { ProductMediaSlider } from "../components/ui/ProductMediaSlider";
 import { toast } from "sonner";
+import CartWishlistProductCard from "../components/product/CartWishlistProductCard";
+import axios from "../api/axios";
 
 // Sample data for supplier
 const supplierStats = {
@@ -42,26 +41,16 @@ const supplierStats = {
   activeOrders: 12,
 };
 
-
-const favorites = [
-  { name: "Modern Sofa", price: "$499", image: "/products/sofa.jpg" },
-  {
-    name: "Wooden Coffee Table",
-    price: "$199",
-    image: "/products/coffee-table.jpg",
-  },
-  { name: "Designer Lamp", price: "$89", image: "/products/lamp.jpg" },
-  { name: "Vintage Chair", price: "$249", image: "/products/chair.jpg" },
-];
-
 export default function Profile() {
   const [tab, setTab] = useState("overview");
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
- // const [loading, setLoading] = useState(false);
+
+  // const [loading, setLoading] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [cartLoaded, setCartLoaded] = useState(false);
+  const [wishlistLoaded, setWishlistLoaded] = useState(false);
 
   // Avatar upload states
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -69,7 +58,14 @@ export default function Profile() {
   const avatarRef = useRef(null);
 
   const { user, setUser } = useAuthCheck();
-  const { getOrders, getProducts, updateUser } = useUserStore();
+  const {
+    getOrders,
+    getProducts,
+    updateUser,
+    cartProducts,
+    likedProducts,
+    listMyCartAndWishlist,
+  } = useUserStore();
 
   // Convert file to base64 for backend
   const convertToBase64 = (file) => {
@@ -179,6 +175,25 @@ export default function Profile() {
     }
   }, [tab, handleGetProducts, user?.role]);
 
+const  handleDeleteOrder = async (orderId) => {
+  if (
+    !window.confirm(
+      "⚠️ Are you sure you want to delete this order? This action cannot be undone."
+    )
+  ) {
+    toast.info("Order deletion cancelled.");
+    return;
+  }
+  try {
+    await axios.delete(`/api/v1/quotation/delete/${orderId}`);
+    toast.success("Order deleted successfully!");
+    handleGetOrders();
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    toast.error("Failed to delete order. Please try again.");
+  }
+};
+
   const getTabOptions = () => {
     if (user?.role === "supplier") {
       return [
@@ -191,11 +206,36 @@ export default function Profile() {
       return [
         { key: "overview", label: "Overview" },
         { key: "orders", label: "My Orders" },
-        { key: "favorites", label: "Favorites" },
+        { key: "favorites", label: "Cart" },
         { key: "wishlist", label: "Wishlist" },
       ];
     }
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const loadCartAndWishlist = async () => {
+        try {
+          // Call only if not loaded yet
+          if (tab === "favorites" && !cartLoaded) {
+            await listMyCartAndWishlist();
+            setCartLoaded(true);
+          } else if (tab === "wishlist" && !wishlistLoaded) {
+            await listMyCartAndWishlist();
+            setWishlistLoaded(true);
+          }
+        } catch (error) {
+          console.error("Failed to load cart/wishlist:", error);
+        }
+      };
+
+      if (tab === "favorites" || tab === "wishlist") {
+        loadCartAndWishlist();
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeout);
+  }, [tab, cartLoaded, wishlistLoaded, listMyCartAndWishlist]);
 
   const renderSupplierOverview = () => (
     <div className="space-y-6">
@@ -302,7 +342,7 @@ export default function Profile() {
             <h4 className="font-semibold text-[#1f3b73]">Favorites</h4>
           </div>
           <p className="text-2xl lg:text-3xl font-bold text-[#1f3b73]">
-            {wishlist.length}
+            {user?.wishlist.length}
           </p>
           <p className="text-sm text-gray-500">Saved items</p>
         </div>
@@ -365,7 +405,7 @@ export default function Profile() {
           <div
             key={product._id}
             className="bg-white rounded-xl shadow p-4 lg:p-6">
-             <ProductMediaSlider media={product.media} title={product.title} />
+            <ProductMediaSlider media={product.media} title={product.title} />
             <h4 className="font-semibold text-[#1f3b73] mb-2">
               {product.title}
             </h4>
@@ -385,18 +425,17 @@ export default function Profile() {
             </div>
 
             <div className="flex gap-2">
-              <Link to={`/product/update/${product._id}`} >
-              <button  className="flex-1 px-3 py-2 bg-[#1f3b73] text-white rounded-lg text-sm font-medium hover:bg-[#16305a] transition">
-                Edit
-              </button>
+              <Link to={`/product/update/${product._id}`}>
+                <button className="flex-1 px-3 py-2 bg-[#1f3b73] text-white rounded-lg text-sm font-medium hover:bg-[#16305a] transition">
+                  Edit
+                </button>
               </Link>
 
-              <Link to={`/product/${product._id}`} >
-              <button  className="flex-1 px-3 py-2 bg-[#e1a95f] text-white rounded-lg text-sm font-medium hover:bg-[#d89a4b] transition">
-                View
-              </button>
+              <Link to={`/product/${product._id}`}>
+                <button className="flex-1 px-3 py-2 bg-[#e1a95f] text-white rounded-lg text-sm font-medium hover:bg-[#d89a4b] transition">
+                  View
+                </button>
               </Link>
-              
             </div>
           </div>
         ))}
@@ -450,14 +489,20 @@ export default function Profile() {
                     {order.product.price} DZD
                   </td>
                   <td className="py-3 px-4">{order.product.title}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 flex  gap-2 ">
                     <Link
-                      to={`/product/${order.product._id}`}
+                      to={user.role === "supplier" ? `/order/${order._id}` : `/product/${order.product._id}`}
                       className="inline-flex items-center gap-2 w-fit">
                       <button className="px-3 py-1 bg-[#e1a95f] text-white rounded text-sm font-medium hover:bg-[#d89a4b] transition">
                         View
                       </button>
                     </Link>
+                      <button
+                        className="px-3 py-1 bg-red-200 text-white rounded text-sm font-medium hover:bg-red-300 transition"
+                        onClick={() => handleDeleteOrder(order._id)}
+                       >
+                        <Trash2 size={16} className="text-red-600" />
+                      </button>
                   </td>
                 </tr>
               ))}
@@ -471,34 +516,25 @@ export default function Profile() {
   const renderFavorites = () => (
     <div className="space-y-6">
       <h3 className="text-xl lg:text-2xl font-bold text-[#1f3b73]">
-        Favorite Products
+        Cart Products
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-        {favorites.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-xl shadow p-4 flex flex-col">
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-full h-32 lg:h-40 object-cover rounded-lg mb-3"
-            />
-            <h4 className="font-semibold text-[#1f3b73] mb-2 flex-1">
-              {item.name}
-            </h4>
-            <p className="text-[#e1a95f] font-bold text-lg mb-3">
-              {item.price}
-            </p>
-            <div className="flex gap-2">
-              <button className="flex-1 px-3 py-2 bg-[#e1a95f] text-white rounded-lg text-sm font-medium hover:bg-[#d89a4b] transition">
-                View
-              </button>
-              <button className="px-3 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-200 transition">
-                <Heart size={16} fill="currentColor" />
-              </button>
-            </div>
-          </div>
+        {cartProducts.map((item, index) => 
+        ( 
+          <CartWishlistProductCard key={index} product={item} Type="cart" />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderWishlist = () => (
+    <div className="space-y-6">
+      <h3 className="text-xl lg:text-2xl font-bold text-[#1f3b73]">Wishlist</h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+        {likedProducts.map((item, index) => (
+          <CartWishlistProductCard key={index} product={item} Type="wishlist" />
         ))}
       </div>
     </div>
@@ -527,17 +563,7 @@ export default function Profile() {
         case "favorites":
           return renderFavorites();
         case "wishlist":
-          return (
-            <div className="text-center py-12">
-              <Heart size={48} className="text-[#e1a95f] mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-[#1f3b73] mb-2">
-                Wishlist Coming Soon
-              </h3>
-              <p className="text-gray-600">
-                Save items for later and track price changes.
-              </p>
-            </div>
-          );
+          return renderWishlist();
         default:
           return renderConsumerOverview();
       }

@@ -163,9 +163,6 @@ export default function Marketplace() {
     fetchData();
   }, [tab, getMarketPlaceProducts]);
 
-  useEffect(() => {
-    console.log(products);
-  }, [products]);
 
   // Filter products based on current tab
   useEffect(() => {
@@ -176,7 +173,7 @@ export default function Marketplace() {
         filtered = products.filter((p) => p.isFeatured);
         break;
       case "flash":
-        filtered = products.filter((p) => p.flashDeals.isActive);
+        filtered = products.filter((p) => p.flashDeals?.isActive);
         break;
       case "new": {
         const now = new Date();

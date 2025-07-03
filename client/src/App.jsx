@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AddProduct from "./pages/AddProduct";
 import { useAuthCheck } from "./hooks/useAuthCheck";
 import EditProduct from "./pages/EditProduct";
+import OrderDetail from "./pages/OrderDetails";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
@@ -61,6 +62,7 @@ function App() {
           <Route path="/cart" element={user&&<Cart />} />
           <Route path="/suppliers" element={user&&<Suppliers />} />
           <Route path="/suppliers/:id" element={user&&<SupplierDetails />} />
+          <Route path="/order/:id" element={user&&user.role === "supplier"&&<OrderDetail />} />
           <Route path="/messages" element={user&&<Chats />} />
           <Route path="/messages/:id" element={user&&<Chat />} />
           <Route path="/dashboard" element={user && user.role === "supplier" ? <Dashboard /> : <NotFound />} />

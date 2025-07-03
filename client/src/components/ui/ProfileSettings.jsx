@@ -41,6 +41,7 @@ import { formatDate } from "../../utils/formatDate.js";
 import useUserStore from "../../store/UserStore.js";
 import { countries } from "../../utils/countries.js";
 import UpdateCompanyInfos from "./UpdateCompanyInfos.jsx";
+import CartWishlistProductCard from "../product/CartWishlistProductCard.jsx";
 
 export default function ProfileSettings() {
   const { tab: urlTab } = useParams(); // Get tab from URL params
@@ -52,7 +53,7 @@ export default function ProfileSettings() {
   const [errors, setErrors] = useState(false);
 
   const { user } = useAuthCheck();
-  const { updateUser, getOrders } = useUserStore();
+  const { updateUser, getOrders ,likedProducts, listMyCartAndWishlist} = useUserStore();
   const [accountInfos, setAccountInfos] = useState({
     name: "",
     email: "",
@@ -402,6 +403,20 @@ export default function ProfileSettings() {
     }
   }, [activeTab, handleGetOrders]);
 
+  useEffect(() => {
+    const fetchSavedItems = async () => {
+      try {
+       await listMyCartAndWishlist();
+      } catch (error) {
+        console.error("Error fetching saved items:", error);
+        toast.error( "Failed to fetch saved items");
+      }
+    }
+    if(activeTab === "saved") {
+      fetchSavedItems();
+    };
+  }, [activeTab, listMyCartAndWishlist]);
+
   const tabItems = [
     { value: "account-infos", label: `${t("account.info")}`, icon: User },
     { value: "security", label: "Login & Security", icon: Shield },
@@ -418,11 +433,7 @@ export default function ProfileSettings() {
     { value: "support", label: "Help & Support", icon: HelpCircle },
   ];
 
-  const savedItems = [
-    { name: "Wireless Headphones", price: "$199.99", image: "🎧" },
-    { name: "Smart Watch", price: "$349.99", image: "⌚" },
-    { name: "Laptop Stand", price: "$79.99", image: "💻" },
-  ];
+
 
   const messages = [
     {
@@ -1207,28 +1218,12 @@ export default function ProfileSettings() {
                   </h2>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {savedItems.map((item, index) => (
-                    <div
+                  {likedProducts.map((item, index) => (
+                    <CartWishlistProductCard
                       key={index}
-                      className="border border-[#1f3b73]/20 rounded-xl p-6 hover:shadow-md transition-shadow">
-                      <div className="text-4xl mb-4 text-center">
-                        {item.image}
-                      </div>
-                      <h3 className="font-semibold text-[#1f3b73] mb-2">
-                        {item.name}
-                      </h3>
-                      <p className="text-[#e1a95f] font-bold text-lg mb-4">
-                        {item.price}
-                      </p>
-                      <div className="flex gap-2">
-                        <button className="flex-1 px-4 py-2 bg-[#1f3b73] text-white rounded-lg hover:bg-[#1f3b73]/90 transition-colors">
-                          Add to Cart
-                        </button>
-                        <button className="px-4 py-2 border border-[#1f3b73]/20 rounded-lg hover:bg-[#f4f2ed] transition-colors">
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </div>
+                      product={item}
+                      Type="wishlist"
+                    />
                   ))}
                 </div>
               </TabsContent>

@@ -470,3 +470,83 @@ export const getMyProductDetails = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const toggleProductInWishlist = async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const index = user.wishlist.indexOf(productId);
+    let action = "";
+
+    if (index !== -1) {
+      user.wishlist.splice(index, 1);
+      action = "removed";
+    } else {
+      user.wishlist.push(productId);
+      action = "added";
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: `Product ${action} to wishlist` });
+  } catch (error) {
+    console.error("toggleProductInWishlist error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Toggle product in cart
+export const toggleProductInCart = async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const index = user.cart.indexOf(productId);
+    let action = "";
+
+    if (index !== -1) {
+      user.cart.splice(index, 1);
+      action = "removed";
+    } else {
+      user.cart.push(productId);
+      action = "added";
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: `Product ${action} to cart` });
+  } catch (error) {
+    console.error("toggleProductInCart error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Get products from wishlist and cart
+export const getCartAndWishlistProducts = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const [wishlistProducts, cartProducts] = await Promise.all([
+      Product.find({ _id: { $in: user.wishlist } }),
+      Product.find({ _id: { $in: user.cart } }),
+    ]);
+
+    res.status(200).json({ wishlistProducts, cartProducts });
+  } catch (error) {
+    console.error("getCartAndWishlistProducts error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

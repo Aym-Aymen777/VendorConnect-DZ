@@ -15,22 +15,31 @@ import {
   Minus,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
+  X,
+  Trash,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import Header from "../components/common/Header";
 import NotFound from "./NotFound";
 import axios from "../api/axios";
 import { toast } from "sonner";
-
+import useUserStore from "../store/UserStore";
+import useCartProduct from "../hooks/useSaveProduct";
+import useLikeProduct from "../hooks/useLikeProduct";
 export default function ProductDetails() {
   // For demo purposes, using the first product
   const [product, setProduct] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
   const [loading, setLoading] = useState(false);
+  const [showAllert, setShowAllert] = useState(false);
+  const [message, setMessage] = useState("");
   const { id } = useParams();
+  const {createQuotation}=useUserStore();
+  const {handleLike, liked} = useLikeProduct(product?._id);
+  const {handleCartToggle, inCart} = useCartProduct(product?._id);
   const getProduct = async () => {
     try {
       setLoading(true);
@@ -45,11 +54,27 @@ export default function ProductDetails() {
     }
   };
 
+const handleBuyNow = async () => {
+  try {
+    await createQuotation({
+      product: product._id,
+      message: `I want to buy ${quantity} of ${product.title},\n${message}`,
+    });
+
+    toast.success("Your purchase request has been sent.");
+    setShowAllert(false); // أغلق التنبيه بعد نجاح العملية
+  } catch (error) {
+    console.error("Error sending purchase request:", error);
+    toast.error("Failed to send your purchase request.");
+  }
+};
+
+
   useEffect(() => {
     if (id) {
       getProduct();
     }
-  }, [id]); // Dependency array with id
+  }, [id]); 
 
   if (loading) {
     return <div>Loading...</div>;
@@ -71,10 +96,90 @@ export default function ProductDetails() {
   const updateQuantity = (change) => {
     setQuantity((prev) => Math.max(1, prev + change));
   };
+    const handleCancel = () => {
+    setShowAllert(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#f4f2ed]">
       <Header />
+      {showAllert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform animate-in duration-300 scale-100">
+            
+            {/* Warning Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-full">
+                    <AlertTriangle className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white">Purchase Confirmation</h2>
+                </div>
+                <button
+                  onClick={handleCancel}
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-1 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Warning Message */}
+            <div className="px-6 py-4">
+              <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg mb-4">
+                <div className="flex">
+                  <AlertTriangle className="w-5 h-5 text-orange-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-orange-800 mb-1">
+                      Important Notice
+                    </h3>
+                    <p className="text-sm text-orange-700">
+                      Please review your purchase carefully. This action cannot be undone and payment will be processed immediately.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div className="mb-6">
+                <label htmlFor="purchase-message" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Add a message (optional):
+                </label>
+                <textarea
+                  id="purchase-message"
+                  rows="4"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Enter any special instructions, delivery notes, or comments about your purchase..."
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all resize-none text-sm"
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  {message.length}/500 characters
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="px-6 pb-6">
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleCancel}
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors border border-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleBuyNow()}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  Confirm Purchase
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-4">
         <nav className="flex items-center gap-2 text-sm text-gray-600">
@@ -169,15 +274,15 @@ export default function ProductDetails() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setIsWishlisted(!isWishlisted)}
+                    onClick={handleLike}
                     className={`p-2 rounded-full transition-colors ${
-                      isWishlisted
+                      liked
                         ? "bg-red-50 text-red-500"
                         : "bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500"
                     }`}>
                     <Heart
                       size={20}
-                      fill={isWishlisted ? "currentColor" : "none"}
+                      fill={liked ? "currentColor" : "none"}
                     />
                   </button>
                   <button className="p-2 rounded-full bg-gray-50 text-gray-400 hover:bg-[#e1a95f]/10 hover:text-[#e1a95f] transition-colors">
@@ -280,10 +385,22 @@ export default function ProductDetails() {
                 <div className="flex gap-3">
                   <button
                     disabled={product?.stock <= 0}
+                    onClick={handleCartToggle}
                     className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#e1a95f] text-white rounded-lg font-semibold hover:bg-[#d89a4b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    <ShoppingCart size={18} /> Add to Cart
+                    {inCart ? (
+                      <>
+                        <Trash size={20} />
+                        <span>Remove from Cart</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={20} />
+                        <span>Add to Cart</span>
+                      </>
+                    )
+                    }
                   </button>
-                  <button className="px-6 py-3 bg-[#1f3b73] text-white rounded-lg font-semibold hover:bg-[#1f3b73]/90 transition-colors">
+                  <button onClick={() => setShowAllert(true)} className="px-6 py-3 bg-[#1f3b73] text-white rounded-lg font-semibold hover:bg-[#1f3b73]/90 transition-colors">
                     Buy Now
                   </button>
                 </div>

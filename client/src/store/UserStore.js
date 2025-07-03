@@ -7,6 +7,9 @@ const API_URL = "/api/v1/user";
 const useUserStore = create((set) => ({
   user: null,
   isLoading: false,
+  likedProducts: [],
+  cartProducts: [],
+  chats:[],
   setUser: (user) => set({ user }),
   clearUser: () => set({ user: null }),
 
@@ -228,14 +231,185 @@ const useUserStore = create((set) => ({
 
   getMarketPlaceProducts: async () => {
     try {
-      const res = await axios.get("/api/v1/product/all",{
-        withCredentials:true,
-      })
-      return res?.data
+      const res = await axios.get("/api/v1/product/all", {
+        withCredentials: true,
+      });
+      return res?.data;
     } catch (error) {
-      toast.error(error.response?.data?.message || "error fetching products")
+      toast.error(error.response?.data?.message || "error fetching products");
     }
   },
+
+  createQuotation: async (quotationData) => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.post(
+        `api/v1/quotation/create`,
+        quotationData,
+        {
+          withCredentials: true,
+        }
+      );
+      set({ isLoading: false, user: response.data.user });
+      toast.success(
+        "Order sent to seller successfully , please wait for confirmation"
+      );
+      return response.data.quotation;
+    } catch (error) {
+      console.error("Error creating quotation:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to create quotation"
+      );
+      set({ isLoading: false });
+      return null;
+    }
+  },
+
+  saveThisProduct: async (productId) => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.post(
+        `api/v1/product/add-to-cart`,
+        { productId },
+        {
+          withCredentials: true,
+        }
+      );
+      set({ isLoading: false, user: response.data.user });
+      if (response.data.message.includes("removed")){
+        toast.error("Product removed from cart");
+      }else{
+        toast.success("Product added to cart");
+      }
+      return response.data.user;
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to add product to cart"
+      );
+      set({ isLoading: false });
+      return null;
+    }
+  },
+
+  likeThisProduct: async (productId) => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.post(
+        `api/v1/product/add-to-wishlist`,
+        { productId },
+        {
+          withCredentials: true,
+        }
+      );
+      set({ isLoading: false, user: response.data.user });
+      if (response.data.message.includes("removed")){
+        toast.error("Product removed from wishlist");
+      }else{
+        toast.success("Product added to wishlist");
+      }
+      return response.data.user;
+    } catch (error) {
+      console.error("Error adding product to wishlist:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to add product to wishlist"
+      );
+      set({ isLoading: false });
+      return null;
+    }
+  },
+
+  listMyCartAndWishlist: async () => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.get(`api/v1/product/cartOrWishlist`, {
+        withCredentials: true,
+      });
+      set({
+        isLoading: false,
+        cartProducts: response.data.cartProducts,
+        likedProducts: response.data.wishlistProducts,
+      });
+      return response?.data;
+    } catch (error) {
+      console.error("Error fetching cart and wishlist products:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to fetch cart and wishlist products"
+      );
+      set({ isLoading: false });
+      return [];
+    }
+  },
+
+  getUserChats: async () => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.get(`api/v1/chat/my-chats`, {
+        withCredentials: true,
+      });
+      set({ isLoading: false , chats: response.data.chats});
+      return response?.data;
+    } catch (error) {
+      console.error("Error fetching user chats:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch user chats");
+      set({ isLoading: false });
+      return [];
+    }
+  },
+
+  getChatMessages: async (chatId) => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.get(`api/v1/chat/${chatId}`, {
+        withCredentials: true,
+      });
+      set({ isLoading: false });
+      return response?.data;
+    } catch (error) {
+      console.error("Error fetching chat messages:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch chat messages");
+      set({ isLoading: false });
+      return [];
+    }
+  },
+
+  sendMessage: async ( chatId, messageData) => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.post(`api/v1/chat/send/${chatId}`, messageData, {
+        withCredentials: true,
+      });
+      set({ isLoading: false });
+      return response?.data;
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error(error.response?.data?.message || "Failed to send message");
+      set({ isLoading: false });
+      return null;
+    }
+  },
+
+  startNewChat: async (participants) => {
+    try {
+      set({ isLoading: true });
+      const response = await axios.post(`api/v1/chat/start`,  participants , {
+        withCredentials: true,
+      });
+      set({ isLoading: false });
+      return response?.data.chat;
+    } catch (error) {
+      console.error("Error starting new chat:", error);
+      toast.error(error.response?.data?.message || "Failed to start new chat");
+      set({ isLoading: false });
+      return null;
+    }
+  },
+
+
+
+
+
 }));
 
 export default useUserStore;
