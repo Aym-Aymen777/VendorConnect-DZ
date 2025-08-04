@@ -243,7 +243,7 @@ export const googleSignup = async (req, res) => {
 
 export const logoutUser = (req, res) => {
   try {
-    res.clearCookie("jwt-Deadecor");
+    res.clearCookie("jwt-Company");
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Error logging out user controller:", error);

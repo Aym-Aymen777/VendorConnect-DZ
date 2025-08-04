@@ -2,7 +2,6 @@ import React from 'react'
 import AutoImageSlider from '../ui/AutoImageSlider'
 import Header from './Header'
 import {Handshake ,HandCoins , Goal} from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useState ,useEffect,useRef} from 'react'
 
 const UnauthUserScreen = () => {
@@ -48,7 +47,7 @@ const UnauthUserScreen = () => {
     {
       id: 3,
       title: "Display on Our Platform",
-      description: "Dedicated page on Deadcor.",
+      description: "Dedicated page on our platform.",
       image: "https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2274&q=80",
       className: "md:col-span-1"
     },
@@ -62,7 +61,7 @@ const UnauthUserScreen = () => {
     {
     id: 5,
     title: "Unified Digital Identity",
-    description: "Identity gathering suppliers under Deadcor.",
+    description: "Identity gathering suppliers under one platform.",
     image: "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
     className: "md:col-span-2" // Changed to span 2 columns
   },
@@ -165,7 +164,7 @@ const UnauthUserScreen = () => {
     <div className='text-center mb-12'>
       <h2 className='text-3xl font-bold text-[#1f3b73] mb-4'>Who we are?</h2>
       <p className='text-[#1f3b73c7] max-w-2xl mx-auto'>
-        Deadecor is a modern Algerian platform that brings together everything related to the world of construction, decoration, renovation and home equipment under one roof.
+        logo is a modern Algerian platform that brings together everything related to the world of construction, decoration, renovation and home equipment under one roof.
         We believe that beauty begins at home, and that every house deserves an elegant, smart and accessible touch.
       </p>
     </div>
@@ -517,7 +516,7 @@ const UnauthUserScreen = () => {
               <svg className="w-5 h-5 text-[#e1a95f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
               </svg>
-              <span>contact@deadecor.com</span>
+              <span>contact@logo.com</span>
             </div>
             <div className="flex items-center space-x-4 text-slate-300">
               <svg className="w-5 h-5 text-[#e1a95f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

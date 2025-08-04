@@ -4,7 +4,7 @@ import { envVars } from "../utils/envVars.js";
 
 export const ProtectRoute = async (req, res, next) => {
   try {
-    const token = req.cookies["jwt-Deadecor"];
+    const token = req.cookies["jwt-Company"];
 
     if (!token) {
       return res.status(401).json({

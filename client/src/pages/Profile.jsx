@@ -321,7 +321,7 @@ const  handleDeleteOrder = async (orderId) => {
   const renderConsumerOverview = () => (
     <div className="space-y-6">
       <h3 className="text-xl lg:text-2xl font-bold text-[#1f3b73] mb-4">
-        Welcome To Deadecor, {user?.name}!
+        Welcome To Our Community, {user?.name}!
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">

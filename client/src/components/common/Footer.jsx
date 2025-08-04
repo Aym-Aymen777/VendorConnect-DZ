@@ -53,11 +53,11 @@ const Footer = ({ companyInfo }) => {
             <div className="space-y-4 text-[#1f3b73]">
               <div className="flex items-center justify-center md:justify-start space-x-3">
                 <FaGlobe className="text-[#e1a95f]" />
-                <span>www.deadecor.com</span>
+                <span>www.logo.com</span>
               </div>
               <div className="flex items-center justify-center md:justify-start space-x-3">
                 <FaEnvelope className="text-[#e1a95f]" />
-                <span>contact@deadecor.com</span>
+                <span>contact@logo.com</span>
               </div>
               <div className="flex items-center justify-center md:justify-start space-x-3">
                 <FaPhone className="text-[#e1a95f]" />
@@ -70,7 +70,7 @@ const Footer = ({ companyInfo }) => {
         {/* Bottom Note */}
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="text-center text-[#294d96aa] text-sm">
-            <p>© DEADECOR 2025. All Rights Reserved | Privacy Policy & Terms of Use</p>
+            <p>© LOGO 2025. All Rights Reserved | Privacy Policy & Terms of Use</p>
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@ Footer.propTypes = {
 };
 
 Footer.defaultProps = {
-  companyInfo: 'DEADECOR - Specialized in Interior Design and Modern Decoration',
+  companyInfo: 'LOGO - Specialized in Interior Design and Modern Decoration',
 };
 
 export default Footer;
